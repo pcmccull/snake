@@ -1,0 +1,725 @@
+<!doctype html>
+<html>
+<head>
+<title>Snake Game</title>
+<script type='text/javascript'
+	src='http://static.firebase.com/demo/firebase.js'></script>
+<script type="text/javascript"
+	src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<script type="text/javascript"
+	src="js/jquery.touchSwipe-1.2.6.js"></script>
+<!-- <script type="text/javascript" src="js/SnakeGame.js"></script>-->
+<style type="text/css">
+html,body,#game,#walls,#snakes {
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	font-size: 100%;
+	overflow: hidden
+}
+
+#game {
+	background-color: #000080;
+	position: relative;
+	text-align:center;
+	line-height:1em;
+}
+
+#game div.drawing {
+	height: auto;
+	position: absolute;
+	top: 0;
+}
+
+#walls {
+	color: #EB000A;
+}
+
+#snakes {
+	color: #FFFF00;
+}
+#overlay {
+	color: #EB000A;
+}
+
+
+pre {
+	
+	font-family: "Courier";	
+	-moz-user-select: none;
+	-khtml-user-select: none;
+	user-select: none;
+	cursor: default;
+	display: inline-block;
+	
+	clear: both; 
+	padding: 0;
+	margin: 0;
+}
+
+#messages {
+	position: absolute;
+	top: 50%;
+	left: 40%;
+	color: #FFFF00;
+}
+
+div.playerCount {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	color: #FFFF00;
+}
+
+#Test {
+	position: absolute;
+	visibility: hidden;
+	height: auto;
+	width: auto;
+}
+</style>
+</head>
+<body>
+	<div id="messages">Joining game..</div>
+
+	<div id="game">
+		<div id="overlay" class="drawing"></div>
+		<div id="snakes" class="drawing"></div>
+		<div id="walls" class="drawing"></div>
+		<div class="playerCount">
+			<span id="playerCount">0</span> Players In Game
+		</div>
+	</div>
+
+	<script type="text/javascript">
+	
+		
+		$(function () {
+			window.game = new SnakeGame();			
+		});
+
+	
+	
+			
+		
+		
+/*-----------------------------------------------------------------------------------------------*/
+function SnakeGame() {
+	this.snakes = [];
+	this.walls = [];
+	this.objectives = [];
+	
+	this.yourSnake = 0;
+	this.canvas = new AsciiCanvas();
+	this.options = SnakeGame.difficulty.hard;
+	
+	var self = this;
+	
+	this.intializeControls();
+	
+	
+	this.startGame();
+	
+	this.showChooseDifficulty();
+}
+SnakeGame.prototype.intializeControls = function () {
+	if ("ontouchstart" in window) {
+		$(document).swipe(function (e, direction, distance) {
+			this.snakes[this.yourSnake].setNewDir(SnakeGame.directionMap[direction]);
+		});
+	} else {
+		$(document).on("keydown", function (e) { self.keyDown(e); });
+	}
+	
+	$(document).focus();
+}
+
+SnakeGame.prototype.startGame = function () {
+	this.snakes = [];
+	this.walls = [];
+	this.objectives = [];
+	this.canvas.clearWalls();
+	this.canvas.clearSnakes();
+	var self = this;
+	var startingPoint = this.canvas.getRandomPoint();
+	var startingDir;
+	if (startingPoint.x < this.canvas.width/2) {
+		startingDir = {x: 1, y:0}; 
+	} else if (startingPoint.y < this.canvas.height/2) {
+		startingDir = {x: 0, y: 1};
+	} else if (Math.random() < .5) {
+		startingDir = {x: -1, y: 0};
+	} else {
+		startingDir = {x: 0, y: -1};
+	}
+	this.snakes.push(new Snake(startingPoint.x, startingPoint.y, this.options.startLen, startingDir));
+	this.objectives.push(undefined);
+	
+	//TODO get other snakes, walls,  and objectives from server 
+	this.drawWalls();
+	this.drawAllObjectives();
+	//this.drawAllSnakes();
+	
+	this.setMyObjective(1);
+	this.drawAllObjectives();
+	
+	
+	if (this.updateInterval != undefined) {
+		clearInterval(this.updateInterval);
+		this.updateInterval = undefined;
+	}
+	this.updateInterval = setInterval(function () {
+		self.update();
+	}, 20);
+	this.lastUpdate = + new Date;
+	this.timeAccum = 0;
+	this.speed = this.options.speed;
+	
+}
+SnakeGame.prototype.gameOver = function () {
+	clearInterval(this.updateInterval);
+	this.updateInterval = undefined;
+}
+SnakeGame.prototype.keyDown = function (e) {
+	e = e || window.event;
+	
+	var newDir = SnakeGame.keyMapping[e.keyCode];
+	this.snakes[this.yourSnake].setNewDir(newDir);		
+}
+
+SnakeGame.prototype.setMyObjective = function(value) {
+	var point = this.canvas.getEmptyRandomCell();
+	this.objectives[0] = ({goal: point, x:point.bottom.x, y: point.bottom.y, value: value});
+}
+
+SnakeGame.prototype.update = function () {
+	var curTime = + new Date;
+	var dt = curTime - this.lastUpdate + this.timeAccum;	
+	var updates = 0;
+	while (dt > this.speed) {		
+		this.updateSnake(this.snakes[this.yourSnake]);
+		dt -= this.speed;
+		updates++;
+	}
+	if (updates > 1)
+		console.log(updates, this.speed);
+	
+	this.timeAccum = dt;
+	this.lastUpdate = curTime;
+}
+
+SnakeGame.prototype.updateSnake = function (snake) {
+	var removeAddPoints = snake.update();
+	
+	if (removeAddPoints != undefined) {
+		var collision = this.isCollision(removeAddPoints.add.x, removeAddPoints.add.y);
+		
+		if (collision == "wall" || collision == "snake") {
+			console.log("snake died: ", collision)
+			snake.timeOfDeath = 0;
+			return;
+		} else if (collision == "goal") {
+			snake.length += this.options.grow;
+			this.canvas.drawCharacter(this.objectives[0].x, this.objectives[0].y, " ");
+			if (this.objectives[0].value == SnakeGame.MAX_OBJECTIVE) {
+				this.gameOver("win");
+				return;
+			}
+			this.setMyObjective( this.objectives[0].value + 1);
+			this.drawAllObjectives();
+			this.speed *= this.options.speedUp;
+		}
+		
+		//clear pixels			
+		if (removeAddPoints.remove != undefined) {
+			this.canvas.clearPixel(removeAddPoints.remove.x, removeAddPoints.remove.y);
+		}
+		this.canvas.drawPixel(removeAddPoints.add.x, removeAddPoints.add.y);
+	} else {
+		
+	}
+}
+SnakeGame.prototype.drawWalls = function () {
+	
+} 
+SnakeGame.prototype.drawAllSnakes = function () {
+	for (var i = 0; i < this.snakes.length; i++) {
+		this.drawSnake(this.snakes[i]);
+	}
+}
+SnakeGame.prototype.drawAllObjectives = function () {
+	for (var i = 0; i < this.objectives.length; i++) {
+		if (this.objectives[i] != undefined) {
+			this.canvas.drawCharacter(this.objectives[i].x, this.objectives[i].y, this.objectives[i].value)
+		}
+	}
+}
+SnakeGame.prototype.drawSnake = function (snake) {
+	this.canvas.setDrawMethod("drawPixel");
+	var turns = snake.turns;
+	this.canvas.moveTo(turns[0].x, turns[0].y);
+	for (var i = 0; i < turns.length; i++) {
+		this.canvas.lineTo(turns[i].x, turns[i].y);
+	}
+}
+SnakeGame.prototype.clearSnake = function (snake) {
+	this.canvas.setDrawMethod("clearPixel");
+	var turns = snake.turns;
+	this.canvas.moveTo(turns[0].x, turns[0].y);
+	for (var i = 0; i < turns.length; i++) {
+		this.canvas.lineTo(turns[i].x, turns[i].y);
+	}
+}
+SnakeGame.prototype.isCollision = function (x, y) {
+	//check for outside wall collisions
+	if (x < 1 || x > this.canvas.width - 2 || y < 2 || y > this.canvas.height * 2 - 3) {
+		return "wall";
+	}
+	
+	for (var iSnake = 0; iSnake < this.snakes.length; iSnake++) {
+		var turns = this.snakes[iSnake].turns;
+		
+		for (var i = 0; i < turns.length; i++) {
+			
+			if (x == turns[i].x) {
+				var start = turns[i].y;
+				var end = turns[i+1] == undefined?turns[i].y:start;
+				
+				//make sure head is not compared to itself
+				if (iSnake != 0 || i < turns.length - 2) {
+					var max, min;
+					if (end > start) {
+						max = end;
+						min = start;
+					} else {
+						max = start;
+						min = end;
+					}
+					
+					if (y >= min && y <= max) {
+						return "snake";
+					}
+				}
+				
+				
+			} else if (y == turns[i].y) {
+				var start = turns[i].x;
+				var end = turns[i+1] == undefined?turns[i].x:start;
+				
+				//make sure head is not compared to itself
+				if (iSnake != 0 || i < turns.length - 2) {
+					var end = turns[i+1] == undefined?turns[i].x:start;
+					var max, min;
+					if (end > start) {
+						max = end;
+						min = start;
+					} else {
+						max = start;
+						min = end;
+					}
+					
+					if (x >= min && x <= max) {					
+						return "snake";
+					}
+				}
+			}
+		}
+	}
+	
+	//TODO check for wall collisions
+	
+	//check for goal collisions
+	var goal = this.objectives[0].goal;
+	if ((x == goal.top.x || x == goal.bottom.x)
+			&& (y == goal.top.y || y == goal.bottom.y))  {
+		return "goal"
+	}
+	
+	
+	//if reached here then not a collision
+	return false;
+}
+
+
+SnakeGame.prototype.showChooseDifficulty = function () {
+	
+}
+SnakeGame.directionMap = {
+		up : {
+			x : 0,
+			y : -1
+		},
+		down : {
+			x : 0,
+			y : 1
+		},
+		left : {
+			x : -1,
+			y : 0
+		},
+		right : {
+			x : 1,
+			y : 0
+		}
+}
+
+SnakeGame.keyMapping = {
+			"38" : SnakeGame.directionMap.up,
+			"40" : SnakeGame.directionMap.down,
+			"37" : SnakeGame.directionMap.left,
+			"39" : SnakeGame.directionMap.right
+		};
+SnakeGame.MAX_OBJECTIVE = 9;
+SnakeGame.difficulty =  {
+		easy: {
+			startLen: 3,
+			speed: 350,
+			speedUp: .95,
+			grow: 3
+		}, 
+		medium: {
+			startLen: 6,
+			speed: 200,
+			speedUp: .9,
+			grow: 6
+		}, 
+		hard:  {
+			startLen: 10,
+			speed: 90,
+			speedUp: .85,
+			grow: 15
+		}
+	};
+ 
+
+
+		
+/*-----------------------------------------------------------------------------------------------*/	
+/**
+* A snake object will track the snakes body locations, and the exact length and position.
+* The main method is update(), which returns the snake's new head location as "add" 
+*/
+function Snake(x, y, length, dir) {
+	this.turns = [{x:x, y:y, dir:dir}];
+	this.head = 0;
+	this.length = length;			
+	this.newDir = [];
+	this.timeOfDeath = undefined;	
+}
+
+/**
+* Calculate the new snake position and return a point to remove and a point to add
+* @return an object containing a point to add and possibly a point to remove {add: vectorObj, remove: vectorObj}
+*/
+Snake.prototype.update = function () {
+	if (this.timeOfDeath != undefined) { return;}
+	var updatePoints = {};
+	//move head
+	var headVector = this.turns[this.head];
+	var newDir = this.newDir.shift() || headVector.dir;
+	
+	if (Snake.compareVector(this.newDir, headVector.dir)) {
+		//keep going same direction
+		this.turns[this.head] = Snake.addDirection(headVector, headVector.dir);
+	} else {
+		this.turns.push(Snake.addDirection(headVector, newDir));
+		this.turns[this.head].dir = newDir;
+		this.head++;
+	}
+	updatePoints.add = this.turns[this.head];
+	
+	if (this.length == 1) {
+		updatePoints.remove = headVector;
+	} else {
+	
+		//move tail
+		// first compute the currrent snake length
+		var curLength = this.calculateLength();
+		if (curLength > this.length) {
+			//need to remove the tail
+			var tailVector = this.turns[0];
+			this.turns[0] = Snake.addDirection(tailVector, tailVector.dir);
+			
+			//check if the tail is equal to the next turn
+			if (Snake.compareVector(this.turns[0], this.turns[1])) {
+				this.turns.shift();
+				this.head--;	
+			}
+			updatePoints.remove = tailVector;			
+		} else if (curLength < this.length && this.turns.length == 1) {		
+			
+			//grow the snake
+			this.turns.unshift(this.turns[0]);
+			this.head++;
+		}
+	}
+		
+	return updatePoints;
+}
+
+/**
+* Sets the new direction as long as it is not directly back into the snake
+*/
+Snake.prototype.setNewDir = function (newDir) {
+	var headDir = this.turns[this.head].dir;
+	if (this.newDir.length > 0) {
+		headDir = this.newDir[0];
+	}
+	
+	//check that the head vector plus the new vector 
+	if (newDir != undefined
+			&& ((headDir.x + newDir.x) != 0 || (headDir.y + newDir.y) != 0)) {
+		this.newDir.push(newDir);
+		
+		//only allow buffering two moves ahead
+		if (this.newDir.length > 2) {
+			this.newDir.shift();
+		}
+	}
+}
+
+/**
+* Calculate the current snake length using the turns array
+*/
+Snake.prototype.calculateLength = function () {
+	if (this.turns.length == 1) {
+		return 1;
+	} else {
+		var length = 1;
+		for (var i = 1; i < this.turns.length; i++) {
+			length += Snake.vectorLength(this.turns[i-1], this.turns[i]);
+		}
+		return length;
+	}
+}
+
+/**
+* Compares two vectors and returns true if their x and y values are both equal
+* @param a - vector object
+* @param b - vector object
+*/
+Snake.compareVector = function (a, b) {
+	return a.x == b.x && a.y == b.y;
+}
+
+/**
+* Adds the direction to vector a and sets the new direction
+* @param a - vector to add to
+* @param dir - direction vector to add and to set as new direction
+*/
+Snake.addDirection = function (a, dir) {
+	return {x: (a.x + dir.x), y: (a.y + dir.y), dir: dir};
+}
+
+/**
+* Computes the distance between vector a and b
+* @param a - vector object
+* @param b - vector object
+*/
+Snake.vectorLength = function (a, b) {
+	//since all vectors are straight lines, just need to substract the x and y values
+	return Math.abs(a.x-b.x + a.y - b.y);
+}
+
+/*-----------------------------------------------------------------------------------------------*/
+
+		
+/*-----------------------------------------------------------------------------------------------*/	
+/**
+ * The AsciiCanvas object has methods for drawing points and lines. The canvas draws the border initially.
+ * When the window is resized the canvas is scaled to fit the window. The canvas is 25 text rows high, but
+ * each ascii "pixel" is half a row, so the actual height is 50 "pixels".
+ */
+function AsciiCanvas() {
+	this.drawPosition = {x:0, y:0};
+	this.width = 80; //number of real text columns
+	this.height = 25; //number of real text rows
+	this.actualHeight = this.height * 2; //each vertical character will represent two y values
+	this.snakeDrawing = [];
+	this.drawMethod = this.drawPixel;
+	this.init();
+	
+}
+
+AsciiCanvas.prototype.init = function () {
+	
+	this.clearWalls();
+	this.clearSnakes();
+	this.resizeCanvas();
+	$(window).resize(this.resizeCanvas);
+}
+
+AsciiCanvas.prototype.clearWalls = function () {
+	var walls = "";
+	//Bottom of Cell: \u2584  Both: \u2588  Top of Cell:\u2580
+	for ( var y = 0; y < this.height; y++) {
+		walls += "<pre>";
+		for ( var x = 0; x < this.width; x++) {
+			if (y === 0) {
+				walls += "\u2584";
+			} else if (y === this.height - 1) {
+				walls += "\u2580";
+			} else if (x == 0 || x == this.width - 1) {
+				walls += "\u2588";
+			} else {
+				walls += " ";
+			}
+		}
+		walls += "</pre><br />";
+	}
+	$("#walls").html(walls);
+}
+
+AsciiCanvas.prototype.clearSnakes = function () {
+	var snakes = "";
+	for ( var y = 0; y < this.height; y++) {
+		snakes += "<pre>";
+		for ( var x = 0; x < this.width; x++) {
+			snakes += " ";
+		}
+		snakes += "</pre><br />";
+	}
+	$("#snakes").html(snakes);
+
+	
+	var self = this;
+	this.snakeDrawing = [];
+	$("#snakes pre").each(function () {
+		self.snakeDrawing.push({
+			pre : $(this),
+			text : $(this).text()
+		});
+	});
+}
+
+/**
+ * Gets a random point within the borders
+ * @return {x:Number, y:Number}
+ */
+AsciiCanvas.prototype.getRandomPoint = function () {
+	return  {
+			x : Math.floor(Math.random() * (this.width - 2)) + 1,
+			y : Math.floor(Math.random() * (this.height * 2 - 4)) + 2
+		};
+}
+AsciiCanvas.prototype.getEmptyRandomCell = function () {
+	var point = this.getRandomPoint();
+
+	//check if point is empty
+	var text = this.snakeDrawing[Math.floor(point.y / 2)].pre.text();	
+	var current = text.charAt(point.x);
+	if (current != " ") {
+		return this.getEmptyRandomCell();
+	} else {
+		return this.getCellPoints(point);
+	}
+}
+AsciiCanvas.prototype.getCellPoints = function (point) {
+	var actualY = Math.floor(point.y/2);
+	return {actualY: actualY, 
+			top: {x: point.x, y: actualY * 2 + 1}, 
+			bottom: {x: point.x, y: actualY * 2}};
+}
+
+AsciiCanvas.prototype.drawCharacter = function (x, y, output) {	
+	var text = this.snakeDrawing[Math.floor(y / 2)].pre.text();
+
+	newText = text.substring(0, x) + output + text.substring(x + 1);	
+	this.snakeDrawing[Math.floor(y / 2)].pre.text(newText);
+}
+
+AsciiCanvas.prototype.setDrawMethod = function (methodStr) {
+	this.drawMethod = this[methodStr];					
+}
+AsciiCanvas.prototype.moveTo = function (x, y) {
+	this.drawPosition = {x:x, y:y};
+}
+AsciiCanvas.prototype.lineTo = function (x, y) {
+	this.drawLine(this.drawPosition.x, this.drawPosition.y, x, y);
+	this.moveTo(x, y);
+}
+/**
+ * 
+ * Credit: Bresenham line drawing algorithm from wikipedia: http://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm#Algorithm
+ */
+AsciiCanvas.prototype.drawLine = function (x0, y0, x1, y1) {
+	var dx = x1 - x0;
+	var dy = y1 - y0;
+
+	var diff = 2 * dy - dx;
+
+	this.drawMethod(x0, y0);
+	var y = y0;
+
+	for ( var x = x0 + 1; x <= x1; x++) {
+		if (diff > 0) {
+			y = y + 1;
+			this.drawMethod(x, y);
+			diff = diff + (2 * dy - 2 * dx);
+		} else {
+			this.drawMethod(x, y);
+			diff = diff + (2 * dy);
+		}
+	}
+	
+	this.drawMethod(x1, y1);
+}
+
+AsciiCanvas.prototype.drawPixel = function(x, y) {
+	var output = y % 2 == 0 ? "\u2580" : "\u2584";
+	var text = this.snakeDrawing[Math.floor(y / 2)].pre.text();
+
+	var newText;
+	var current = text.charAt(x);
+	if (current == " ") {
+		newText = text.substring(0, x) + output
+				+ text.substring(x + 1);
+	} else if (current != output) {
+		newText = text.substring(0, x) + "\u2588"
+				+ text.substring(x + 1);
+	}
+	this.snakeDrawing[Math.floor(y / 2)].pre.text(newText);
+}
+
+AsciiCanvas.prototype.clearPixel = function(x, y) {	
+	var output = y % 2 == 0 ? "\u2580" : "\u2584";
+	var oppositeOutput = y % 2 != 0 ? "\u2580" : "\u2584";
+	var text = this.snakeDrawing[Math.floor(y / 2)].pre.text();
+
+	var newText;
+	var current = text.charAt(x);
+	if (current == " ") {
+		//already blank
+		return;
+	} else if (current == output) {
+		newText = text.substring(0, x) + " "
+				+ text.substring(x + 1);
+	} else {
+		newText = text.substring(0, x) + oppositeOutput
+				+ text.substring(x + 1);
+	}
+	this.snakeDrawing[Math.floor(y / 2)].pre.text(newText);
+}
+
+AsciiCanvas.prototype.resizeCanvas = function() {
+	$("#game").css({
+		"font-size" : "1em"
+	});
+	
+	var windowHeight = $(window).height();
+	var windowWidth = $(window).width();
+	var playAreaHeight = $("#game pre").height() * 27;
+	var playAreaWidth = $("#game pre").width();
+	var resizeRatio = Math.min(windowHeight / playAreaHeight,
+			windowWidth / playAreaWidth);
+	
+	$("#game").css({
+		"font-size" : (resizeRatio) + "em"
+	});
+}
+/*-----------------------------------------------------------------------------------------------*/	
+	</script>
+
+</body>
+</html>
