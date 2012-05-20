@@ -124,6 +124,7 @@ function SnakeGame() {
 	this.showChooseDifficulty();
 }
 SnakeGame.prototype.intializeControls = function () {
+	var self = this;
 	if ("ontouchstart" in window) {
 		$(document).swipe(function (e, direction, distance) {
 			this.snakes[this.yourSnake].setNewDir(SnakeGame.directionMap[direction]);
