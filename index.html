@@ -90,6 +90,7 @@ div.playerCount {
 		<div id="walls" class="drawing"></div>
 		<div class="playerCount">
 			<span id="playerCount">0</span> Players In Game
+			<span>Press Space Bar to Begin</span>
 		</div>
 	</div>
 
@@ -114,7 +115,7 @@ function SnakeGame() {
 	this.yourSnake = 0;
 	this.canvas = new AsciiCanvas();
 	this.options = SnakeGame.difficulty.medium;
-	this.levelIndex = 6;
+	this.levelIndex = 0;
 	this.level = SnakeGame.levels[this.levelIndex];
 	
 	var self = this;
@@ -196,9 +197,12 @@ SnakeGame.prototype.levelCompleted = function () {
 }
 SnakeGame.prototype.keyDown = function (e) {
 	e = e || window.event;
-	
-	var newDir = SnakeGame.keyMapping[e.keyCode];
-	this.snakes[this.yourSnake].setNewDir(newDir);		
+	if (e.keyCode == 32 && this.snakes[this.yourSnake].timeOfDeath != 0) {
+		this.startGame();
+	} else {
+		var newDir = SnakeGame.keyMapping[e.keyCode];
+		this.snakes[this.yourSnake].setNewDir(newDir);
+	}
 }
 
 SnakeGame.prototype.setMyObjective = function(value) {
@@ -228,9 +232,8 @@ SnakeGame.prototype.updateSnake = function (snake) {
 	if (removeAddPoints != undefined) {
 		var collision = this.isCollision(removeAddPoints.add.x, removeAddPoints.add.y);
 		
-		if (collision == "wall" || collision == "snake") {
-			console.log("snake died: ", collision)
-			snake.timeOfDeath = 0;
+		if (collision == "wall" || collision == "snake") {			
+			snake.timeOfDeath = + new Date;
 			return;
 		} else if (collision == "goal") {
 			snake.length += this.options.grow;
@@ -409,7 +412,7 @@ SnakeGame.keyMapping = {
 			"37" : SnakeGame.directionMap.left,
 			"39" : SnakeGame.directionMap.right
 		};
-SnakeGame.MAX_OBJECTIVE = 3;
+SnakeGame.MAX_OBJECTIVE = 9;
 SnakeGame.difficulty =  {
 		easy: {
 			startLen: 3,
@@ -463,10 +466,10 @@ SnakeGame.levels = [
 		 {
 			speed: .99,
 			title: "Level 6: Jail Time",
-			walls: [ [{x:10, y: 0}, {x:10, y: 20}], [{x:20, y: 0}, {x:20, y: 20}],
-			         [{x:30, y: 0}, {x:30, y: 20}], [{x:40, y: 0}, {x:40, y: 20}],
-			         [{x:50, y: 0}, {x:50, y: 20}], [{x:60, y: 0}, {x:60, y: 20}],
-			         [{x:70, y: 0}, {x:70, y: 20}],
+			walls: [ [{x:10, y: 1}, {x:10, y: 20}], [{x:20, y: 1}, {x:20, y: 20}],
+			         [{x:30, y: 1}, {x:30, y: 20}], [{x:40, y: 1}, {x:40, y: 20}],
+			         [{x:50, y: 1}, {x:50, y: 20}], [{x:60, y: 1}, {x:60, y: 20}],
+			         [{x:70, y: 1}, {x:70, y: 20}],
 			         [{x:10, y: 32}, {x:10, y: 49}], [{x:20, y: 32}, {x:20, y: 49}],
 			         [{x:30, y: 32}, {x:30, y: 49}], [{x:40, y: 32}, {x:40, y: 49}],
 			         [{x:50, y: 32}, {x:50, y: 49}], [{x:60, y: 32}, {x:60, y: 49}],
@@ -475,12 +478,14 @@ SnakeGame.levels = [
 		 {
 			speed: .99,
 			title: "Level 7: Cross the Dotted Line",
-			walls: [ [{x:39, y: 0}, {x:39, y: 1}], [{x:39, y: 3}, {x:39, y: 3}], [{x:39, y: 5}, {x:39, y: 5}],
+			walls: [ [{x:39, y: 3}, {x:39, y: 3}], [{x:39, y: 5}, {x:39, y: 5}],
 			         [{x:39, y: 7}, {x:39, y: 7}], [{x:39, y: 9}, {x:39, y: 9}], [{x:39, y: 11}, {x:39, y: 11}],
 			         [{x:39, y: 13}, {x:39, y: 13}], [{x:39, y: 15}, {x:39, y: 15}], [{x:39, y: 17}, {x:39, y: 17}],
-			         [{x:39, y: 19}, {x:39, y: 19}],  [{x:39, y: 21}, {x:39, y: 21}]
-			         
-			
+			         [{x:39, y: 19}, {x:39, y: 19}],  [{x:39, y: 21}, {x:39, y: 21}],  [{x:39, y: 23}, {x:39, y: 23}],
+					 [{x:39, y: 25}, {x:39, y: 25}],  [{x:39, y: 27}, {x:39, y: 27}],  [{x:39, y: 29}, {x:39, y: 29}],
+					 [{x:39, y: 31}, {x:39, y: 31}],  [{x:39, y: 33}, {x:39, y: 33}],  [{x:39, y: 35}, {x:39, y: 35}],
+					 [{x:39, y: 37}, {x:39, y: 37}],  [{x:39, y: 39}, {x:39, y: 39}],  [{x:39, y: 41}, {x:39, y: 41}],
+					 [{x:39, y: 43}, {x:39, y: 43}],  [{x:39, y: 45}, {x:39, y: 45}],  [{x:39, y: 47}, {x:39, y: 47}]
 					]
 		}
 	];	
@@ -499,7 +504,7 @@ function Snake(x, y, length, dir) {
 	this.head = 0;
 	this.length = length;			
 	this.newDir = [];
-	this.timeOfDeath = undefined;	
+	this.timeOfDeath = 0;	
 }
 
 /**
@@ -507,7 +512,7 @@ function Snake(x, y, length, dir) {
 * @return an object containing a point to add and possibly a point to remove {add: vectorObj, remove: vectorObj}
 */
 Snake.prototype.update = function () {
-	if (this.timeOfDeath != undefined) { return;}
+	if (this.timeOfDeath != 0) { return;}
 	var updatePoints = {};
 	//move head
 	var headVector = this.turns[this.head];
