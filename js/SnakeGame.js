@@ -4,18 +4,25 @@ function SnakeGame() {
 	this.objectives = [];
 	
 	this.yourSnake = 0;
-	this.canvas = new AsciiCanvas();
-	this.options = SnakeGame.difficulty.medium;
-	this.levelIndex = 0;
-	this.level = SnakeGame.levels[this.levelIndex];
-		
-	this.initializeControls();
+	this.canvas = new AsciiCanvas();	
+	this.initializeControls();	
 	
-	this.startGame();
+	//start update loop
+	var self = this;
+	(function updateFunc(time) {
+		window.requestAnimationFrame(updateFunc);
+		if (!self.paused) {			
+			self.update();
+		}
+	})();	
 	
-	this.showChooseDifficulty();
+	this.showSplashScreen();
 }
-
+SnakeGame.STATE_SPLASH = "STATE_SPLASH";
+SnakeGame.STATE_DIFFICULTY = "STATE_DIFFICULTY";
+SnakeGame.STATE_PAUSED = "STATE_PAUSED";
+SnakeGame.STATE_PLAYING = "STATE_PLAYING";
+SnakeGame.STATE_GAME_OVER = "STATE_GAME_OVER";
 SnakeGame.prototype.initializeControls = function () {
 	var self = this;
 	if ("ontouchstart" in window) {
@@ -29,13 +36,40 @@ SnakeGame.prototype.initializeControls = function () {
 	$(document).focus();
 };
 
+SnakeGame.prototype.showSplashScreen = function () {	
+	this.gameState = SnakeGame.STATE_SPLASH;	
+	$("#splashScreen").show();
+	this.levelIndex = 0; 
+	this.level = SnakeGame.levels[this.levelIndex];
+};
+SnakeGame.prototype.showDifficultyScreen = function () {
+	this.gameState = SnakeGame.STATE_DIFFICULTY;
+	$("#splashScreen").hide();
+	$("#difficultyScreen").show();
+};
+
+
+SnakeGame.prototype.showLevelTitleScreen = function () {
+	this.gameState = SnakeGame.STATE_PAUSED;
+	$("#difficultyScreen").hide();
+	$("#levelScreen").show();
+	$("#levelTitle").html(this.level.title);
+};
+
+SnakeGame.prototype.showSnakeDiedScreen = function () {
+	this.gameState = SnakeGame.STATE_PAUSED;
+	$("#snakeDied").show();
+};
+
 SnakeGame.prototype.startGame = function () {
+	$("#levelScreen").hide();
+	$("#snakeDied").hide();
+	this.gameState = SnakeGame.STATE_PLAYING;
 	this.snakes = [];
 	this.walls = [];
 	this.objectives = [];
 	this.canvas.clearSnakes();
 	this.canvas.clearWalls();
-	var self = this;
 	var startingPoint = this.canvas.getRandomPoint();
 	var startingDir;
 	if (startingPoint.x < this.canvas.width/2) {
@@ -59,22 +93,13 @@ SnakeGame.prototype.startGame = function () {
 	this.setMyObjective(1);
 	this.drawAllObjectives();
 	
-	
-	if (this.updateInterval != undefined) {
-		clearInterval(this.updateInterval);
-		this.updateInterval = undefined;
-	}
-	this.updateInterval = setInterval(function () {
-		self.update();
-	}, 20);
 	this.lastUpdate = + new Date;
 	this.timeAccum = 0;
 	this.speed = this.options.speed;
 	
 };
 SnakeGame.prototype.levelCompleted = function () {
-	clearInterval(this.updateInterval);
-	this.updateInterval = undefined;
+	self.paused = true;
 	
 	if (this.levelIndex == SnakeGame.levels.length) {
 		//game over
@@ -86,12 +111,50 @@ SnakeGame.prototype.levelCompleted = function () {
 };
 SnakeGame.prototype.keyDown = function (e) {
 	e = e || window.event;
-	if (e.keyCode == 32 && this.snakes[this.yourSnake].timeOfDeath != 0) {
-		this.startGame();
-	} else {
+	//console.log(e.keyCode, this.gameState);
+	if (this.gameState == SnakeGame.STATE_SPLASH) {
+		if (e.keyCode == SnakeGame.keyCodesMap.NUMBER_ONE) {
+			//start single player
+			this.showDifficultyScreen();
+		} else if (e.keyCode == SnakeGame.keyCodesMap.NUMBER_TWO) {
+			//start multiplayer
+			this.showMultiplayerScreen();
+		}
+	} else if (this.gameState == SnakeGame.STATE_DIFFICULTY) {
+		if (e.keyCode == SnakeGame.keyCodesMap.NUMBER_ONE) {
+			//easy
+			this.options = SnakeGame.difficulty.easy;
+			this.showLevelTitleScreen();
+		} else if (e.keyCode == SnakeGame.keyCodesMap.NUMBER_TWO) {
+			//medium
+			this.options = SnakeGame.difficulty.medium;
+			this.showLevelTitleScreen();
+		} else if (e.keyCode == SnakeGame.keyCodesMap.NUMBER_THREE){
+			//hard
+			this.options = SnakeGame.difficulty.hard;
+			this.showLevelTitleScreen();
+		}
+	}  else if (this.gameState == SnakeGame.STATE_PAUSED) {
+		if (e.keyCode == SnakeGame.keyCodesMap.SPACE_BAR) {
+			this.startGame();
+		}
+	} else if (this.gameState == SnakeGame.STATE_PLAYING) {		
 		var newDir = SnakeGame.keyMapping[e.keyCode];
-		this.snakes[this.yourSnake].setNewDir(newDir);
+		this.snakes[this.yourSnake].setNewDir(newDir);		
+	} 
+	
+	
+	//handle escape key
+	if (e.keyCode == SnakeGame.keyCodesMap.ESCAPE) {
+		this.showSplashScreen();		
 	}
+};
+SnakeGame.keyCodesMap = {
+		ESCAPE: 27,
+		NUMBER_ONE: 49,
+		NUMBER_TWO: 50,
+		NUMBER_THREE: 51,
+		SPACE_BAR: 32
 };
 
 SnakeGame.prototype.setMyObjective = function(value) {
@@ -108,8 +171,6 @@ SnakeGame.prototype.update = function () {
 		dt -= this.speed;
 		updates++;
 	}
-	if (updates > 1)
-		console.log(updates, this.speed);
 	
 	this.timeAccum = dt;
 	this.lastUpdate = curTime;
@@ -123,6 +184,7 @@ SnakeGame.prototype.updateSnake = function (snake) {
 		
 		if (collision == "wall" || collision == "snake") {			
 			snake.timeOfDeath = + new Date;
+			this.showSnakeDiedScreen();
 			return;
 		} else if (collision == "goal") {
 			snake.length += this.options.grow;
@@ -264,10 +326,6 @@ SnakeGame.prototype.isPointOnLine = function (x, y, x0, y0, x1, y1) {
 	}
 };
 
-
-SnakeGame.prototype.showChooseDifficulty = function () {
-	
-};
 SnakeGame.directionMap = {
 		up : {
 			x : 0,
@@ -293,7 +351,7 @@ SnakeGame.keyMapping = {
 			"37" : SnakeGame.directionMap.left,
 			"39" : SnakeGame.directionMap.right
 		};
-SnakeGame.MAX_OBJECTIVE = 9;
+SnakeGame.MAX_OBJECTIVE = 3;
 SnakeGame.difficulty =  {
 		easy: {
 			startLen: 3,
@@ -370,3 +428,32 @@ SnakeGame.levels = [
 					]
 		}
 	];	
+
+
+
+
+//requestAnimationFrame polyfill http://paulirish.com/2011/requestanimationframe-for-smart-animating/
+(function() {
+    var lastTime = 0;
+    var vendors = ['ms', 'moz', 'webkit', 'o'];
+    for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
+        window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
+        window.cancelAnimationFrame = 
+          window[vendors[x]+'CancelAnimationFrame'] || window[vendors[x]+'CancelRequestAnimationFrame'];
+    }
+ 
+    if (!window.requestAnimationFrame)
+        window.requestAnimationFrame = function(callback, element) {
+            var currTime = new Date().getTime();
+            var timeToCall = Math.max(0, 16 - (currTime - lastTime));
+            var id = window.setTimeout(function() { callback(currTime + timeToCall); }, 
+              timeToCall);
+            lastTime = currTime + timeToCall;
+            return id;
+        };
+ 
+    if (!window.cancelAnimationFrame)
+        window.cancelAnimationFrame = function(id) {
+            clearTimeout(id);
+        };
+}());

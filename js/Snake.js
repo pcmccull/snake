@@ -74,8 +74,8 @@ Snake.prototype.setNewDir = function (newDir) {
 			&& ((headDir.x + newDir.x) != 0 || (headDir.y + newDir.y) != 0)) {
 		this.newDir.push(newDir);
 		
-		//only allow buffering two moves ahead
-		if (this.newDir.length > 2) {
+		//only allow buffering three moves ahead
+		if (this.newDir.length > 3) {
 			this.newDir.shift();
 		}
 	}
