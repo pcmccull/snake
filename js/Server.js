@@ -1,11 +1,14 @@
 /**
  * SnakeGame object
  */
-function Server() {
+function Server(onReady, addEnemy, removeEnemy, updateEnemy) {
 	this.firebaseUrl = "http://demo.firebase.com/snake";
 	this.snakeData = new Firebase(this.firebaseUrl + '7249669454/');
-	$("#game").hide();
 	this.initializePlayer();	
+	this.onReady = onReady;
+	this.addEnemy = addEnemy;
+	this.removeEnemy = removeEnemy;
+	this.updateEnemy = updateEnemy;
 }
 Server.prototype.initializePlayer = function () {
 	var self = this;
@@ -30,7 +33,9 @@ Server.prototype.findGame = function (gameId) {
 		} else {
 			snapshot.forEach(function(childSnapshot) {
 				  var data = childSnapshot.val();
+				  self.currentLevel = data.currentLevel;
 				  self.joinGame(data.id);
+				  
 				});
 		}
 	});
@@ -39,7 +44,8 @@ Server.prototype.createGame = function () {
 	var self = this;
 	var gamesList = this.snakeData.child("games_list");
 	var gameId = 'game_' + (+ new Date);
-	gamesList.push({id:gameId}, function (result) {
+	console.log("joining: " + gameId);
+	this.game = gamesList.push({id:gameId}, function (result) {
 		if (result) {
 			self.joinGame(gameId);
 		} else {
@@ -47,39 +53,46 @@ Server.prototype.createGame = function () {
 			console.log("Error: unable to create game");
 		}
 	});
+	this.game.currentLevel = 0;
 	
 };
 Server.prototype.joinGame = function (gameId) {
-	
+	var self = this;
 	this.gameData = new Firebase(this.firebaseUrl + gameId);
+	this.playerData = this.gameData.push({player:this.playerName, turns:[]});
+	this.playerData.removeOnDisconnect();
+	this.onReady(this.currentLevel, this.playerName);
 	this.playerCount = 0;
-	this.gameData.on("child_added", function (snapshot) {
-		self.playersCount++;
+	console.log("joining: " + gameId);
+	this.gameData.on("child_added", function (snapshot) {	
+		self.addEnemy(snapshot.val());
+		
+		self.playersCount++;		
 		self.updatePlayerCount();
+		
+	});
+	this.gameData.on("value", function(snapshot) {
+		self.updateEnemy(snapshot.val());
+		console.log(snapshot.val());
 	});
 	this.gameData.on("child_removed", function (snapshot) {
 		self.playerCount--;
-		self.updatePlayerCount();		
+		self.updatePlayerCount();	
+		self.removeEnemy(snapshot.val());
 	});
-	$("#joiningMessage").hide();
-	$("#game").show();
 	
-	this.playerData = this.gameData.push({player:this.playerName, moves:[]});
-	this.playerData.removeOnDisconnect();
+	
 	
 	console.log(this.playerData);
 };
-Server.prototype.startGame = function () {
-	  var canvas = $('#playArea'); 
-	 
-	  var canvas = $canvas[0]; //get the actual dom element
-	  var ctx = canvas.getContext('2d'); //get the context
-	  ctx.fillStyle = '#fe57a1'; //hot pink!
-	  ctx.fillRect(10, 10, 30, 50); //fill a rectangle (x, y, width, height)
-}
+
+Server.prototype.updateMySnake = function (snake) {
+	this.playerData.child('turns').set(snake.turns);
+};
+
 Server.prototype.updatePlayerCount = function () {
-	
-}
+	console.log(this.playerCount);
+};
 
 
 	

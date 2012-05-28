@@ -43,6 +43,9 @@ html,body,#game, #game > div {
 #overlay {
 	color: #EB000A;
 }
+#otherSnakes {
+	color: #FF52FF;
+}
 
 
 pre {
@@ -59,7 +62,7 @@ pre {
 	margin: 0;
 }
 
-#splashScreen, #levelScreen, #gameOver, #difficultyScreen, #snakeDied {
+#splashScreen, #levelScreen, #gameOver, #difficultyScreen, #snakeDied, #joiningGame {
 	position:absolute;
 	top: 20%;
 	left: 1%;
@@ -75,7 +78,7 @@ pre {
 		<div id="otherSnakes" class="drawing"></div>
 		<div id="walls" class="drawing"></div>
 		<div class="playerCount"></div>
-		<div id="splashScreen">
+		<div id="splashScreen" class="screen">
 			<pre>▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄</pre><br />
 			<pre>█                                                            █</pre><br />
 			<pre>█                   Yet Another Snake Game                   █</pre><br />
@@ -85,7 +88,7 @@ pre {
 			<pre>█                                                            █</pre><br />
 			<pre>▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀</pre>
 		</div>
-		<div id="difficultyScreen">
+		<div id="difficultyScreen" class="screen">
 			<pre>▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄</pre><br />
 			<pre>█                                                            █</pre><br />
 			<pre>█                Select difficulty:                          █</pre><br />
@@ -93,10 +96,11 @@ pre {
 			<pre>█                 Press 1 for easy                           █</pre><br />
 			<pre>█                 Press 2 for medium                         █</pre><br />
 			<pre>█                 Press 3 for hard                           █</pre><br />
+			<pre>█                 Press 4 for impossible                     █</pre><br />
 			<pre>█                                                            █</pre><br />
 			<pre>▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀</pre>
 		</div>
-		<div id="levelScreen">
+		<div id="levelScreen" class="screen">
 					<pre>▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄</pre><br />
 					<pre>█                                                    █</pre><br />
 					<pre id="levelTitle"></pre><br />
@@ -105,7 +109,7 @@ pre {
 					<pre>█                                                    █</pre><br />
 					<pre>▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀</pre>
 		</div>
-		<div id="snakeDied">
+		<div id="snakeDied" class="screen">
 			<pre>▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄</pre><br />
 			<pre>█                                   █</pre><br />
 			<pre>█            You Died :(            █</pre><br />
@@ -114,7 +118,14 @@ pre {
 			<pre>█                                   █</pre><br />
 			<pre>▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀</pre>
 		</div>
-		<div id="gameOver">
+		<div id="joiningGame" class="screen">
+			<pre>▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄</pre><br />
+			<pre>█                                   █</pre><br />
+			<pre>█          Joining game...          █</pre><br />
+			<pre>█                                   █</pre><br />
+			<pre>▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀</pre>
+		</div>
+		<div id="gameOver" class="screen">
 			<pre>▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄</pre><br />
 			<pre>█                                   █</pre><br />
 			<pre>█            You Win! :)            █</pre><br />						
@@ -128,6 +139,7 @@ pre {
 	<script type="text/javascript" src="js/SnakeGame.js"></script>
 	<script type="text/javascript" src="js/Snake.js"></script>
 	<script type="text/javascript" src="js/AsciiCanvas.js"></script>
+	<script type="text/javascript" src="js/Server.js"></script>
 	<script type="text/javascript">
 		$(function () {
 			window.game = new SnakeGame();			

@@ -4,10 +4,12 @@
 */
 function Snake(x, y, length, dir) {
 	this.turns = [{x:x, y:y, dir:dir}];
+	this.newTurns = [];
 	this.head = 0;
 	this.length = length;			
 	this.newDir = [];
 	this.timeOfDeath = 0;	
+	this.name = "";
 }
 
 /**
@@ -21,7 +23,7 @@ Snake.prototype.update = function () {
 	var headVector = this.turns[this.head];
 	var newDir = this.newDir.shift() || headVector.dir;
 	
-	if (Snake.compareVector(this.newDir, headVector.dir)) {
+	if (Snake.compareVector(newDir, headVector.dir)) {
 		//keep going same direction
 		this.turns[this.head] = Snake.addDirection(headVector, headVector.dir);
 	} else {
@@ -49,14 +51,12 @@ Snake.prototype.update = function () {
 				this.head--;	
 			}
 			updatePoints.remove = tailVector;			
-		} else if (curLength < this.length && this.turns.length == 1) {		
-			
+		} else if (curLength < this.length && this.turns.length == 1) {
 			//grow the snake
 			this.turns.unshift(this.turns[0]);
 			this.head++;
 		}
 	}
-		
 	return updatePoints;
 };
 

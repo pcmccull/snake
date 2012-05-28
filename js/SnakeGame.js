@@ -11,9 +11,7 @@ function SnakeGame() {
 	var self = this;
 	(function updateFunc(time) {
 		window.requestAnimationFrame(updateFunc);
-		if (!self.paused) {			
-			self.update();
-		}
+		self.update();
 	})();	
 	
 	this.showSplashScreen();
@@ -21,6 +19,7 @@ function SnakeGame() {
 SnakeGame.STATE_SPLASH = "STATE_SPLASH";
 SnakeGame.STATE_DIFFICULTY = "STATE_DIFFICULTY";
 SnakeGame.STATE_PAUSED = "STATE_PAUSED";
+SnakeGame.STATE_MULTIPLAYER_PAUSED = "STATE_MULTIPLAYER_PAUSED";
 SnakeGame.STATE_PLAYING = "STATE_PLAYING";
 SnakeGame.STATE_GAME_OVER = "STATE_GAME_OVER";
 SnakeGame.prototype.initializeControls = function () {
@@ -37,9 +36,11 @@ SnakeGame.prototype.initializeControls = function () {
 };
 
 SnakeGame.prototype.showSplashScreen = function () {	
-	this.gameState = SnakeGame.STATE_SPLASH;	
+	$("div.screen").hide();
 	$("#splashScreen").show();
-	this.levelIndex = 0; 
+	this.reset();
+	this.gameState = SnakeGame.STATE_SPLASH;	 
+	this.levelIndex = 0;
 	this.level = SnakeGame.levels[this.levelIndex];
 };
 SnakeGame.prototype.showDifficultyScreen = function () {
@@ -47,29 +48,88 @@ SnakeGame.prototype.showDifficultyScreen = function () {
 	$("#splashScreen").hide();
 	$("#difficultyScreen").show();
 };
+SnakeGame.prototype.showJoiningScreen = function () {
+	this.gameState = SnakeGame.STATE_MULTIPLAYER_PAUSED;
+	this.enemyMap = {};
+	$("#splashScreen").hide();
+	$("#joiningGame").show();
+	var self = this;
+	this.server = new Server(function(currentLevel, name) {
+		self.options = SnakeGame.difficulty.medium;
+		self.levelIndex = currentLevel;
+		self.name = name;
+		self.showLevelTitleScreen();
+		$("#joiningGame").hide();
+	}, function (enemySnake) {
+		self.addEnemySnake(enemySnake);
+	}, function (enemySnake) {
+		self.removeEnemySnake(enemySnake);
+	}, function (enemySnake) {
+		self.updateEnemySnake(enemySnake);
+	});
+};
 
+SnakeGame.prototype.addEnemySnake = function (enemySnake) {
+	if (enemySnake.player == this.name) return;
+	
+	var snake = new Snake();
+	this.enemyMap[enemySnake.player] = snake;
+	snake.turns = enemySnake.turns;
+	snake.name = enemySnake.player;
+	this.snakes.push(snake);
+};
+
+SnakeGame.prototype.updateEnemySnake = function (allSnakes) {
+	for (var i in allSnakes) {
+		var snake = this.enemyMap[allSnakes[i].player];
+		var turns = allSnakes[i].turns;
+		if (snake != undefined && turns != undefined) {
+			snake.newTurns = turns;
+		}
+	}
+	
+};
+
+SnakeGame.prototype.removeEnemySnake = function (snake) {
+	var bFound = false;
+	var i = 0;
+	while (!bFound && i < this.snakes.length) {
+		if (this.snakes[i].name == snake.name) {
+			bFound = true;
+			this.snakes.splice(i, 1);
+		} else {
+			i++;
+		}
+	}
+};
 
 SnakeGame.prototype.showLevelTitleScreen = function () {
 	this.gameState = SnakeGame.STATE_PAUSED;
 	$("#difficultyScreen").hide();
 	$("#levelScreen").show();
 	$("#levelTitle").html(this.level.title);
+	this.reset();
 };
 
 SnakeGame.prototype.showSnakeDiedScreen = function () {
 	this.gameState = SnakeGame.STATE_PAUSED;
 	$("#snakeDied").show();
 };
+SnakeGame.prototype.reset = function () {
+	this.snakes = [];
+	
+	this.walls = [];
+	this.objectives = [];
 
+	this.objectives.push(undefined);
+	this.canvas.clearSnakes();
+	this.canvas.clearWalls();
+};
 SnakeGame.prototype.startGame = function () {
 	$("#levelScreen").hide();
 	$("#snakeDied").hide();
 	this.gameState = SnakeGame.STATE_PLAYING;
-	this.snakes = [];
-	this.walls = [];
-	this.objectives = [];
-	this.canvas.clearSnakes();
-	this.canvas.clearWalls();
+	
 	var startingPoint = this.canvas.getRandomPoint();
 	var startingDir;
 	if (startingPoint.x < this.canvas.width/2) {
@@ -81,14 +141,18 @@ SnakeGame.prototype.startGame = function () {
 	} else {
 		startingDir = {x: 0, y: -1};
 	}
-	this.snakes.push(new Snake(startingPoint.x, startingPoint.y, this.options.startLen, startingDir));
-	this.objectives.push(undefined);
+	this.canvas.clearSnakes();
+	var snake = new Snake(startingPoint.x, startingPoint.y, this.options.startLen, startingDir);
+	if (this.snakes.length == 0) {
+		this.snakes.push(snake);
+	} else {
+		this.snakes[0] = snake;
+	}
 	
-	//TODO get other snakes, walls,  and objectives from server 
+	this.snakes[0].name = this.name;
+
 	
 	this.drawWalls();
-	this.drawAllObjectives();
-	//this.drawAllSnakes();
 	
 	this.setMyObjective(1);
 	this.drawAllObjectives();
@@ -99,14 +163,12 @@ SnakeGame.prototype.startGame = function () {
 	
 };
 SnakeGame.prototype.levelCompleted = function () {
-	self.paused = true;
-	
 	if (this.levelIndex == SnakeGame.levels.length) {
 		//game over
 	} else {
 		this.levelIndex++;
 		this.level = SnakeGame.levels[this.levelIndex];
-		this.startGame();
+		this.showLevelTitleScreen();
 	}
 };
 SnakeGame.prototype.keyDown = function (e) {
@@ -118,7 +180,7 @@ SnakeGame.prototype.keyDown = function (e) {
 			this.showDifficultyScreen();
 		} else if (e.keyCode == SnakeGame.keyCodesMap.NUMBER_TWO) {
 			//start multiplayer
-			this.showMultiplayerScreen();
+			this.showJoiningScreen();
 		}
 	} else if (this.gameState == SnakeGame.STATE_DIFFICULTY) {
 		if (e.keyCode == SnakeGame.keyCodesMap.NUMBER_ONE) {
@@ -133,6 +195,10 @@ SnakeGame.prototype.keyDown = function (e) {
 			//hard
 			this.options = SnakeGame.difficulty.hard;
 			this.showLevelTitleScreen();
+		} else if (e.keyCode == SnakeGame.keyCodesMap.NUMBER_FOUR){
+			//impossible
+			this.options = SnakeGame.difficulty.impossible;
+			this.showLevelTitleScreen();
 		}
 	}  else if (this.gameState == SnakeGame.STATE_PAUSED) {
 		if (e.keyCode == SnakeGame.keyCodesMap.SPACE_BAR) {
@@ -141,8 +207,7 @@ SnakeGame.prototype.keyDown = function (e) {
 	} else if (this.gameState == SnakeGame.STATE_PLAYING) {		
 		var newDir = SnakeGame.keyMapping[e.keyCode];
 		this.snakes[this.yourSnake].setNewDir(newDir);		
-	} 
-	
+	}
 	
 	//handle escape key
 	if (e.keyCode == SnakeGame.keyCodesMap.ESCAPE) {
@@ -154,6 +219,7 @@ SnakeGame.keyCodesMap = {
 		NUMBER_ONE: 49,
 		NUMBER_TWO: 50,
 		NUMBER_THREE: 51,
+		NUMBER_FOUR: 52,
 		SPACE_BAR: 32
 };
 
@@ -165,17 +231,38 @@ SnakeGame.prototype.setMyObjective = function(value) {
 SnakeGame.prototype.update = function () {
 	var curTime = + new Date;
 	var dt = curTime - this.lastUpdate + this.timeAccum;	
-	var updates = 0;
+	var updates = 0;	
+	if (this.server) {
+		this.updateOtherSnakes();
+	}
+	
 	while (dt > this.speed) {		
-		this.updateSnake(this.snakes[this.yourSnake]);
+		if (this.gameState == SnakeGame.STATE_PLAYING) {
+			this.updateSnake(this.snakes[this.yourSnake]);
+		}
 		dt -= this.speed;
 		updates++;
+	}
+	
+	if (this.server && this.gameState == SnakeGame.STATE_PLAYING) {
+		this.server.updateMySnake(this.snakes[this.yourSnake]);
 	}
 	
 	this.timeAccum = dt;
 	this.lastUpdate = curTime;
 };
-
+SnakeGame.prototype.updateOtherSnakes = function () {
+	for (var i = 1; i < this.snakes.length; i ++) {
+		
+		if (this.snakes[i].turns != undefined && this.snakes[i].turns.length > 0) {
+			this.clearSnake(this.snakes[i], AsciiCanvas.OTHER_SNAKES);
+		}
+		if (this.snakes[i].newTurns != undefined && this.snakes[i].newTurns.length > 0) {
+			this.snakes[i].turns = this.snakes[i].newTurns; 
+			this.drawSnake(this.snakes[i], AsciiCanvas.OTHER_SNAKES);
+		}
+	}
+};
 SnakeGame.prototype.updateSnake = function (snake) {
 	var removeAddPoints = snake.update();
 	
@@ -218,8 +305,8 @@ SnakeGame.prototype.drawWalls = function () {
 };
 
 SnakeGame.prototype.drawAllSnakes = function () {
-	for (var i = 0; i < this.snakes.length; i++) {
-		this.drawSnake(this.snakes[i]);
+	for (var i = 0; i < this.snakes.length; i++) {		
+		this.drawSnake(this.snakes[i], i==0?AsciiCanvas.SNAKE:AsciiCanvas.OTHER_SNAKES);
 	}
 };
 SnakeGame.prototype.drawAllObjectives = function () {
@@ -229,20 +316,20 @@ SnakeGame.prototype.drawAllObjectives = function () {
 		}
 	}
 };
-SnakeGame.prototype.drawSnake = function (snake) {
+SnakeGame.prototype.drawSnake = function (snake, drawing) {
 	this.canvas.setDrawMethod("drawPixel");
 	var turns = snake.turns;
 	this.canvas.moveTo(turns[0].x, turns[0].y);
 	for (var i = 0; i < turns.length; i++) {
-		this.canvas.lineTo(turns[i].x, turns[i].y, AsciiCanvas.SNAKE);
+		this.canvas.lineTo(turns[i].x, turns[i].y, drawing);
 	}
 };
-SnakeGame.prototype.clearSnake = function (snake) {
+SnakeGame.prototype.clearSnake = function (snake, drawing) {
 	this.canvas.setDrawMethod("clearPixel");
 	var turns = snake.turns;
 	this.canvas.moveTo(turns[0].x, turns[0].y);
 	for (var i = 0; i < turns.length; i++) {
-		this.canvas.lineTo(turns[i].x, turns[i].y, AsciiCanvas.SNAKE);
+		this.canvas.lineTo(turns[i].x, turns[i].y, drawing);
 	}
 };
 SnakeGame.prototype.isCollision = function (x, y) {
@@ -259,7 +346,7 @@ SnakeGame.prototype.isCollision = function (x, y) {
 			if ((iSnake != 0 || i < turns.length - 2)) {
 				if (x == turns[i].x) {
 					var start = turns[i].y;
-					var end = turns[i+1] == undefined?turns[i].y:start;
+					var end = turns[i+1] == undefined?start:turns[i+1].y;
 					
 					var max, min;
 					if (end > start) {
@@ -275,7 +362,7 @@ SnakeGame.prototype.isCollision = function (x, y) {
 					}
 				} else if (y == turns[i].y) {					
 					var start = turns[i].x;
-					var end = turns[i+1] == undefined?turns[i].x:start;
+					var end = turns[i+1] == undefined?start:turns[i+1].x;
 					var max, min;
 					if (end > start) {
 						max = end;
@@ -352,6 +439,8 @@ SnakeGame.keyMapping = {
 			"39" : SnakeGame.directionMap.right
 		};
 SnakeGame.MAX_OBJECTIVE = 3;
+
+//lower speed is faster
 SnakeGame.difficulty =  {
 		easy: {
 			startLen: 3,
@@ -360,15 +449,21 @@ SnakeGame.difficulty =  {
 			grow: 8
 		}, 
 		medium: {
-			startLen: 6,
+			startLen: 10,
 			speed: 200,
 			speedUp: .93,
 			grow: 15
 		}, 
 		hard:  {
-			startLen: 10,
+			startLen: 15,
 			speed: 90,
 			speedUp: .87,
+			grow: 20
+		}, 
+		impossible:  {
+			startLen: 1000,
+			speed: 85,
+			speedUp: .82,
 			grow: 20
 		}
 	};
@@ -386,24 +481,24 @@ SnakeGame.levels = [
 			walls: [ [{x:20, y: 25}, {x:60, y: 25}]]
 		},
 		 {
-			speed: .99,
+			speed: .95,
 			title: "Level 3: Oh No! Two Lines In the Middle!",
 			walls: [ [{x:20, y: 10}, {x:20, y: 40}] , [{x:60, y: 10}, {x:60, y: 40}]]
 		},
 		 {
-			speed: .99,
-			title: "Level 4: Random Lines",
+			speed: .93,
+			title: "Level 4: More Lines",
 			walls: [ [{x:0, y: 35}, {x:43, y: 35}] , [{x:20, y: 0}, {x:20, y: 25}],
 			         [{x:79, y: 15}, {x:37, y: 15}] , [{x:60, y: 49}, {x:60, y: 25}]]
 		},
 		 {
-			speed: .99,
+			speed: .90,
 			title: "Level 5: In a Box",
 			walls: [ [{x:20, y: 15}, {x:20, y: 35}] , [{x:22, y: 12}, {x:58, y: 12}],
 			         [{x:60, y: 15}, {x:60, y: 35}] , [{x:22, y: 38}, {x:58, y: 38}]]
 		},
 		 {
-			speed: .99,
+			speed: .85,
 			title: "Level 6: Jail Time",
 			walls: [ [{x:10, y: 1}, {x:10, y: 20}], [{x:20, y: 1}, {x:20, y: 20}],
 			         [{x:30, y: 1}, {x:30, y: 20}], [{x:40, y: 1}, {x:40, y: 20}],
@@ -415,7 +510,7 @@ SnakeGame.levels = [
 			         [{x:70, y: 32}, {x:70, y: 49}] ]
 		},
 		 {
-			speed: .99,
+			speed: .80,
 			title: "Level 7: Cross the Dotted Line",
 			walls: [ [{x:39, y: 3}, {x:39, y: 3}], [{x:39, y: 5}, {x:39, y: 5}],
 			         [{x:39, y: 7}, {x:39, y: 7}], [{x:39, y: 9}, {x:39, y: 9}], [{x:39, y: 11}, {x:39, y: 11}],
