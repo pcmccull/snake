@@ -42,6 +42,11 @@ SnakeGame.prototype.showSplashScreen = function () {
 	this.gameState = SnakeGame.STATE_SPLASH;	 
 	this.levelIndex = 0;
 	this.level = SnakeGame.levels[this.levelIndex];
+	
+	if (this.server) {
+		this.server.disconnect();
+		this.server = undefined;
+	}
 };
 SnakeGame.prototype.showDifficultyScreen = function () {
 	this.gameState = SnakeGame.STATE_DIFFICULTY;
@@ -51,31 +56,37 @@ SnakeGame.prototype.showDifficultyScreen = function () {
 SnakeGame.prototype.showJoiningScreen = function () {
 	this.gameState = SnakeGame.STATE_MULTIPLAYER_PAUSED;
 	this.enemyMap = {};
-	$("#splashScreen").hide();
+	$("div.screen").hide();
 	$("#joiningGame").show();
 	var self = this;
-	this.server = new Server(function(currentLevel, name) {
+	this.server = new Server(function(name) {
 		self.options = SnakeGame.difficulty.medium;
-		self.levelIndex = currentLevel;
 		self.name = name;
-		self.showLevelTitleScreen();
-		$("#joiningGame").hide();
 	}, function (enemySnake) {
 		self.addEnemySnake(enemySnake);
 	}, function (enemySnake) {
 		self.removeEnemySnake(enemySnake);
 	}, function (enemySnake) {
 		self.updateEnemySnake(enemySnake);
+	}, function (newLevel) {		
+		$("div.screen").hide();
+		self.levelIndex = newLevel;
+		self.level = SnakeGame.levels[self.levelIndex];
+		self.showLevelTitleScreen();
 	});
 };
 
 SnakeGame.prototype.addEnemySnake = function (enemySnake) {
+	
 	if (enemySnake.player == this.name) return;
 	
 	var snake = new Snake();
 	this.enemyMap[enemySnake.player] = snake;
 	snake.turns = enemySnake.turns;
 	snake.name = enemySnake.player;
+	if (this.snakes.length == 0) {
+		this.snakes.push(new Snake()); //make sure your snake is added before adding enemies
+	}
 	this.snakes.push(snake);
 };
 
@@ -105,7 +116,7 @@ SnakeGame.prototype.removeEnemySnake = function (snake) {
 
 SnakeGame.prototype.showLevelTitleScreen = function () {
 	this.gameState = SnakeGame.STATE_PAUSED;
-	$("#difficultyScreen").hide();
+	$("div.screen").hide();
 	$("#levelScreen").show();
 	$("#levelTitle").html(this.level.title);
 	this.reset();
@@ -124,10 +135,10 @@ SnakeGame.prototype.reset = function () {
 	this.objectives.push(undefined);
 	this.canvas.clearSnakes();
 	this.canvas.clearWalls();
+	
 };
 SnakeGame.prototype.startGame = function () {
-	$("#levelScreen").hide();
-	$("#snakeDied").hide();
+	$("div.screen").hide();
 	this.gameState = SnakeGame.STATE_PLAYING;
 	
 	var startingPoint = this.canvas.getRandomPoint();
@@ -164,9 +175,14 @@ SnakeGame.prototype.startGame = function () {
 };
 SnakeGame.prototype.levelCompleted = function () {
 	if (this.levelIndex == SnakeGame.levels.length) {
-		//game over
+		//TODO handlegame over
+		this.levelIndex = 0;
 	} else {
 		this.levelIndex++;
+	}
+	if (this.server) {
+		this.server.updateLevel(this.levelIndex);
+	} else {
 		this.level = SnakeGame.levels[this.levelIndex];
 		this.showLevelTitleScreen();
 	}
@@ -340,43 +356,44 @@ SnakeGame.prototype.isCollision = function (x, y) {
 	
 	for (var iSnake = 0; iSnake < this.snakes.length; iSnake++) {
 		var turns = this.snakes[iSnake].turns;
-		
-		for (var i = 0; i < turns.length; i++) {
-			//make sure not comparing to own head
-			if ((iSnake != 0 || i < turns.length - 2)) {
-				if (x == turns[i].x) {
-					var start = turns[i].y;
-					var end = turns[i+1] == undefined?start:turns[i+1].y;
-					
-					var max, min;
-					if (end > start) {
-						max = end;
-						min = start;
-					} else {
-						max = start;
-						min = end;
-					}
-					
-					if (y >= min && y <= max) {
-						return "snake";
-					}
-				} else if (y == turns[i].y) {					
-					var start = turns[i].x;
-					var end = turns[i+1] == undefined?start:turns[i+1].x;
-					var max, min;
-					if (end > start) {
-						max = end;
-						min = start;
-					} else {
-						max = start;
-						min = end;
-					}
-					
-					if (x >= min && x <= max) {					
-						return "snake";
+		if (turns != undefined) {
+			for (var i = 0; i < turns.length; i++) {
+				//make sure not comparing to own head
+				if ((iSnake != 0 || i < turns.length - 2)) {
+					if (x == turns[i].x) {
+						var start = turns[i].y;
+						var end = turns[i+1] == undefined?start:turns[i+1].y;
+						
+						var max, min;
+						if (end > start) {
+							max = end;
+							min = start;
+						} else {
+							max = start;
+							min = end;
+						}
+						
+						if (y >= min && y <= max) {
+							return "snake";
+						}
+					} else if (y == turns[i].y) {					
+						var start = turns[i].x;
+						var end = turns[i+1] == undefined?start:turns[i+1].x;
+						var max, min;
+						if (end > start) {
+							max = end;
+							min = start;
+						} else {
+							max = start;
+							min = end;
+						}
+						
+						if (x >= min && x <= max) {					
+							return "snake";
+						}
 					}
 				}
-			}
+			}			
 		}
 	}
 	

@@ -1,7 +1,7 @@
 /**
  * SnakeGame object
  */
-function Server(onReady, addEnemy, removeEnemy, updateEnemy) {
+function Server(onReady, addEnemy, removeEnemy, updateEnemy, onChangeLevel) {
 	this.firebaseUrl = "http://demo.firebase.com/snake";
 	this.snakeData = new Firebase(this.firebaseUrl + '7249669454/');
 	this.initializePlayer();	
@@ -9,6 +9,7 @@ function Server(onReady, addEnemy, removeEnemy, updateEnemy) {
 	this.addEnemy = addEnemy;
 	this.removeEnemy = removeEnemy;
 	this.updateEnemy = updateEnemy;
+	this.onChangeLevel = onChangeLevel;
 }
 Server.prototype.initializePlayer = function () {
 	var self = this;
@@ -33,9 +34,7 @@ Server.prototype.findGame = function (gameId) {
 		} else {
 			snapshot.forEach(function(childSnapshot) {
 				  var data = childSnapshot.val();
-				  self.currentLevel = data.currentLevel;
 				  self.joinGame(data.id);
-				  
 				});
 		}
 	});
@@ -53,37 +52,65 @@ Server.prototype.createGame = function () {
 			console.log("Error: unable to create game");
 		}
 	});
-	this.game.currentLevel = 0;
-	
 };
 Server.prototype.joinGame = function (gameId) {
 	var self = this;
 	this.gameData = new Firebase(this.firebaseUrl + gameId);
-	this.playerData = this.gameData.push({player:this.playerName, turns:[]});
+	this.levelData = new Firebase(this.firebaseUrl + gameId + "/level");
+	//set the level to zero by default
+	this.setDefaultValue(this.firebaseUrl + gameId, "level", 0);
+	this.playerList = new Firebase(this.firebaseUrl + gameId + "/player_list");
+	this.playerData = this.playerList.push({player: this.playerName, turns: []});
 	this.playerData.removeOnDisconnect();
-	this.onReady(this.currentLevel, this.playerName);
+	this.onReady(this.playerName);
 	this.playerCount = 0;
-	console.log("joining: " + gameId);
-	this.gameData.on("child_added", function (snapshot) {	
-		self.addEnemy(snapshot.val());
+	this.listeners = [];
+	this.listeners.push({
+		key: "child_added", 
+		obj: this.playerList,
+		func: this.playerList.on("child_added", function (snapshot) {	
+			self.addEnemy(snapshot.val());
+			console.log("added: ", snapshot.val());
+			self.playerCount++;		
+			self.updatePlayerCount();
+		})
+	});
+	this.listeners.push({
+		key: "value",
+		obj: this.playerList,
+		func: this.playerList.on("value", function (snapshot) {
+			self.updateEnemy(snapshot.val());
+		})
+	});
+	this.listeners.push({
+		key: "child_removed", 
+		obj: this.playerList,
+		func: this.playerList.on("child_removed", function (snapshot) {
+			self.playerCount--;
+			self.updatePlayerCount();	
+			self.removeEnemy(snapshot.val());
+		}) 
+	});
+	this.listeners.push({
+		key: "value", 
+		obj: this.levelData ,
+		func: this.levelData .on("value", function (snapshot) {	
+			self.onChangeLevel(snapshot.val());
+			console.log("new level: ", snapshot.val());			
+		})
+	});
+};
+Server.prototype.updateLevel = function (level) {
+	 this.levelData.set(level);
+};
+Server.prototype.disconnect = function () {
+	if (this.playerData) {
+		this.playerData.remove();
 		
-		self.playersCount++;		
-		self.updatePlayerCount();
-		
-	});
-	this.gameData.on("value", function(snapshot) {
-		self.updateEnemy(snapshot.val());
-		console.log(snapshot.val());
-	});
-	this.gameData.on("child_removed", function (snapshot) {
-		self.playerCount--;
-		self.updatePlayerCount();	
-		self.removeEnemy(snapshot.val());
-	});
-	
-	
-	
-	console.log(this.playerData);
+		for (var i = 0; i < this.listeners.length; i++) {
+			this.listeners[i].obj.off(this.listeners[i].key, this.listeners[i].func);
+		}
+	}
 };
 
 Server.prototype.updateMySnake = function (snake) {
@@ -91,9 +118,18 @@ Server.prototype.updateMySnake = function (snake) {
 };
 
 Server.prototype.updatePlayerCount = function () {
-	console.log(this.playerCount);
+	//this.playerCount
 };
 
+Server.prototype.setDefaultValue = function (db, id, value) {
+	var reference = new Firebase(db);
+	reference.child(id).transaction(function(currentData) {
+		if (currentData === null)
+			return value;
+	}, function(success) {
+		
+	});
+};
 
 	
 
