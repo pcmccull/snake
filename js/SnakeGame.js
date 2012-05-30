@@ -125,6 +125,8 @@ SnakeGame.prototype.removeEnemySnake = function (snake) {
 SnakeGame.prototype.addFood = function (food) {
 	this.food.push(food);
 	this.canvas.drawCharacter(food.x, food.y, "\u263C", AsciiCanvas.SNAKE);
+	this.lastFoodUpdate = + new Date;
+	this.nextFoodUpdate = Math.random() * 5000 + 20;
 };
 SnakeGame.prototype.removeFood = function (food) {
 	var bFound = false;
@@ -138,6 +140,8 @@ SnakeGame.prototype.removeFood = function (food) {
 			i++;
 		}
 	}
+	this.lastFoodUpdate = + new Date;
+	this.nextFoodUpdate = Math.random() * 5000 + 20;
 };
 
 
@@ -183,7 +187,9 @@ SnakeGame.prototype.startGame = function () {
 	this.timeAccum = 0;
 	this.speed = this.options.speed;
 	
-	this.maximizeFood();
+	this.lastFoodUpdate = + new Date;
+	this.nextFoodUpdate = Math.random() * 5000 + 2000;
+	
 	
 };
 SnakeGame.prototype.levelCompleted = function () {
@@ -285,13 +291,15 @@ SnakeGame.prototype.update = function () {
 };
 
 SnakeGame.prototype.maximizeFood = function () {
-	if (this.server && this.server.food) {
+	var now  = (+ new Date);
+	if (this.server && this.server.food && (now - this.lastFoodUpdate) > this.nextFoodUpdate) {
 		var max = SnakeGame.MAX_FOOD;
 		var addFood = max - this.food.length;
 		for (var i = 0; i < addFood; i++) {
 			var point = this.canvas.getEmptyRandomCell().bottom;
 			this.server.createFood(point.x, point.y);
 		}
+		this.lastFoodUpdate = now;
 	}
 };
 SnakeGame.prototype.updateOtherSnakes = function () {
