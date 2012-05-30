@@ -105,8 +105,9 @@ SnakeGame.prototype.removeEnemySnake = function (snake) {
 	var bFound = false;
 	var i = 0;
 	while (!bFound && i < this.snakes.length) {
-		if (this.snakes[i].name == snake.name) {
+		if (this.snakes[i].name == snake.player) {
 			bFound = true;
+			this.clearSnake(this.snakes[i], AsciiCanvas.OTHER_SNAKES );
 			this.snakes.splice(i, 1);
 		} else {
 			i++;
