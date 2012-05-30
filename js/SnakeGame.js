@@ -98,7 +98,6 @@ SnakeGame.prototype.updateEnemySnake = function (allSnakes) {
 			snake.newTurns = turns;
 		}
 	}
-	
 };
 
 SnakeGame.prototype.removeEnemySnake = function (snake) {
@@ -119,8 +118,10 @@ SnakeGame.prototype.showLevelTitleScreen = function () {
 	this.gameState = SnakeGame.STATE_PAUSED;
 	$("div.screen").hide();
 	$("#levelScreen").show();
-	$("#levelTitle").html(this.level.title);
-	this.reset();
+	$("#levelTitle").html(this.level.title);	
+	this.walls = [];
+	this.canvas.clearWalls();
+	this.drawWalls();
 };
 
 SnakeGame.prototype.showSnakeDiedScreen = function () {
@@ -129,10 +130,9 @@ SnakeGame.prototype.showSnakeDiedScreen = function () {
 };
 SnakeGame.prototype.reset = function () {
 	this.snakes = [];
+	this.snakes.push(new Snake());
 	
-	this.walls = [];
 	this.objectives = [];
-
 	this.objectives.push(undefined);
 	this.canvas.clearSnakes();
 	this.canvas.clearWalls();
@@ -155,16 +155,11 @@ SnakeGame.prototype.startGame = function () {
 	}
 	this.canvas.clearSnakes();
 	var snake = new Snake(startingPoint.x, startingPoint.y, this.options.startLen, startingDir);
-	if (this.snakes.length == 0) {
-		this.snakes.push(snake);
-	} else {
-		this.snakes[0] = snake;
-	}
-	
+	this.snakes[0] = snake;
 	this.snakes[0].name = this.name;
 
 	
-	this.drawWalls();
+	
 	
 	this.setMyObjective(1);
 	this.drawAllObjectives();
