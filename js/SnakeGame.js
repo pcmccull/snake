@@ -1,9 +1,4 @@
 function SnakeGame() {
-	this.snakes = [];
-	this.walls = [];
-	this.objectives = [];
-	
-	this.yourSnake = 0;
 	this.canvas = new AsciiCanvas();	
 	this.initializeControls();	
 	
@@ -22,11 +17,22 @@ SnakeGame.STATE_PAUSED = "STATE_PAUSED";
 SnakeGame.STATE_MULTIPLAYER_PAUSED = "STATE_MULTIPLAYER_PAUSED";
 SnakeGame.STATE_PLAYING = "STATE_PLAYING";
 SnakeGame.STATE_GAME_OVER = "STATE_GAME_OVER";
+
+SnakeGame.prototype.reset = function () {
+	this.snakes = [];
+	this.food = [];
+	this.snakes.push(new Snake());
+	
+	this.objectives = [];
+	this.objectives.push(undefined);
+	this.canvas.clearSnakes();
+	this.canvas.clearWalls();
+};
 SnakeGame.prototype.initializeControls = function () {
 	var self = this;
 	if ("ontouchstart" in window) {
 		$("body").swipe({swipe: function (e, direction, distance) {
-				self.snakes[self.yourSnake].setNewDir(SnakeGame.directionMap[direction]);
+			this.yourSnake.setNewDir(SnakeGame.directionMap[direction]);
 			}
 		});
 	} else {
@@ -73,6 +79,10 @@ SnakeGame.prototype.showJoiningScreen = function () {
 		self.levelIndex = newLevel;
 		self.level = SnakeGame.levels[self.levelIndex];
 		self.showLevelTitleScreen();
+	}, function (food) {
+		self.addFood(food);
+	}, function (food) {
+		self.removeFood(food);
 	});
 };
 
@@ -99,7 +109,6 @@ SnakeGame.prototype.updateEnemySnake = function (allSnakes) {
 		}
 	}
 };
-
 SnakeGame.prototype.removeEnemySnake = function (snake) {
 	var bFound = false;
 	var i = 0;
@@ -113,6 +122,24 @@ SnakeGame.prototype.removeEnemySnake = function (snake) {
 		}
 	}
 };
+SnakeGame.prototype.addFood = function (food) {
+	this.food.push(food);
+	this.canvas.drawCharacter(food.x, food.y, "\u263C", AsciiCanvas.SNAKE);
+};
+SnakeGame.prototype.removeFood = function (food) {
+	var bFound = false;
+	var i = 0;
+	while (!bFound && i < this.food.length) {
+		if (this.food[i].x == food.x && this.food[i].y == food.y) {
+			bFound = true;
+			this.canvas.drawCharacter(this.food[i].x, this.food[i].y, " ", AsciiCanvas.SNAKE);			
+			this.food.splice(i, 1);
+		} else {
+			i++;
+		}
+	}
+};
+
 
 SnakeGame.prototype.showLevelTitleScreen = function () {
 	this.gameState = SnakeGame.STATE_PAUSED;
@@ -128,16 +155,7 @@ SnakeGame.prototype.showSnakeDiedScreen = function () {
 	this.gameState = SnakeGame.STATE_PAUSED;
 	$("#snakeDied").show();
 };
-SnakeGame.prototype.reset = function () {
-	this.snakes = [];
-	this.snakes.push(new Snake());
-	
-	this.objectives = [];
-	this.objectives.push(undefined);
-	this.canvas.clearSnakes();
-	this.canvas.clearWalls();
-	
-};
+
 SnakeGame.prototype.startGame = function () {
 	$("div.screen").hide();
 	this.gameState = SnakeGame.STATE_PLAYING;
@@ -154,12 +172,9 @@ SnakeGame.prototype.startGame = function () {
 		startingDir = {x: 0, y: -1};
 	}
 	this.canvas.clearSnakes();
-	var snake = new Snake(startingPoint.x, startingPoint.y, this.options.startLen, startingDir);
-	this.snakes[0] = snake;
+	this.yourSnake = new Snake(startingPoint.x, startingPoint.y, this.options.startLen, startingDir);
+	this.snakes[0] = this.yourSnake;
 	this.snakes[0].name = this.name;
-
-	
-	
 	
 	this.setMyObjective(1);
 	this.drawAllObjectives();
@@ -167,6 +182,8 @@ SnakeGame.prototype.startGame = function () {
 	this.lastUpdate = + new Date;
 	this.timeAccum = 0;
 	this.speed = this.options.speed;
+	
+	this.maximizeFood();
 	
 };
 SnakeGame.prototype.levelCompleted = function () {
@@ -218,7 +235,7 @@ SnakeGame.prototype.keyDown = function (e) {
 		}
 	} else if (this.gameState == SnakeGame.STATE_PLAYING) {		
 		var newDir = SnakeGame.keyMapping[e.keyCode];
-		this.snakes[this.yourSnake].setNewDir(newDir);		
+		this.yourSnake.setNewDir(newDir);		
 	}
 	
 	//handle escape key
@@ -237,10 +254,12 @@ SnakeGame.keyCodesMap = {
 
 SnakeGame.prototype.setMyObjective = function(value) {
 	var point = this.canvas.getEmptyRandomCell();
+	
 	this.objectives[0] = ({goal: point, x:point.bottom.x, y: point.bottom.y, value: value});
 };
 
 SnakeGame.prototype.update = function () {
+	this.maximizeFood();
 	var curTime = + new Date;
 	var dt = curTime - this.lastUpdate + this.timeAccum;	
 	var updates = 0;	
@@ -250,18 +269,30 @@ SnakeGame.prototype.update = function () {
 	
 	while (dt > this.speed) {		
 		if (this.gameState == SnakeGame.STATE_PLAYING) {
-			this.updateSnake(this.snakes[this.yourSnake]);
+			this.updateSnake(this.yourSnake);
 		}
 		dt -= this.speed;
 		updates++;
 	}
 	
 	if (this.server && this.gameState == SnakeGame.STATE_PLAYING) {
-		this.server.updateMySnake(this.snakes[this.yourSnake]);
+		this.server.updateMySnake(this.yourSnake);
 	}
 	
 	this.timeAccum = dt;
 	this.lastUpdate = curTime;
+	
+};
+
+SnakeGame.prototype.maximizeFood = function () {
+	if (this.server && this.server.food) {
+		var max = SnakeGame.MAX_FOOD;
+		var addFood = max - this.food.length;
+		for (var i = 0; i < addFood; i++) {
+			var point = this.canvas.getEmptyRandomCell().bottom;
+			this.server.createFood(point.x, point.y);
+		}
+	}
 };
 SnakeGame.prototype.updateOtherSnakes = function () {
 	for (var i = 1; i < this.snakes.length; i ++) {
@@ -326,6 +357,10 @@ SnakeGame.prototype.drawAllObjectives = function () {
 		if (this.objectives[i] != undefined) {
 			this.canvas.drawCharacter(this.objectives[i].x, this.objectives[i].y, this.objectives[i].value, AsciiCanvas.SNAKE);
 		}
+	}
+	
+	for (var i = 0; i < this.food.length; i++) {
+		this.canvas.drawCharacter( this.food[i].x, this.food[i].y, "\u263C", AsciiCanvas.SNAKE);
 	}
 };
 SnakeGame.prototype.drawSnake = function (snake, drawing) {
@@ -407,6 +442,15 @@ SnakeGame.prototype.isCollision = function (x, y) {
 		return "goal";
 	}
 	
+	//check for food collision
+	for (var i = 0; i < this.food.length; i++) {
+		if (x == this.food[i].x && y == this.food[i].y)  {
+			this.server.eatFood(x, y);
+			this.yourSnake.length += this.options.grow;
+			this.speed *= this.options.speedUp;			
+		}
+	}
+	
 	
 	//if reached here then not a collision
 	return false;
@@ -452,6 +496,7 @@ SnakeGame.keyMapping = {
 			"39" : SnakeGame.directionMap.right
 		};
 SnakeGame.MAX_OBJECTIVE = 3;
+SnakeGame.MAX_FOOD = 5;
 
 //lower speed is faster
 SnakeGame.difficulty =  {

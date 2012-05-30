@@ -1,7 +1,7 @@
 /**
  * SnakeGame object
  */
-function Server(onReady, addEnemy, removeEnemy, updateEnemy, onChangeLevel) {
+function Server(onReady, addEnemy, removeEnemy, updateEnemy, onChangeLevel, addFood, removeFood) {
 	this.firebaseUrl = "http://demo.firebase.com/snake";
 	this.snakeData = new Firebase(this.firebaseUrl + '7249669454/');
 	this.initializePlayer();	
@@ -10,6 +10,8 @@ function Server(onReady, addEnemy, removeEnemy, updateEnemy, onChangeLevel) {
 	this.removeEnemy = removeEnemy;
 	this.updateEnemy = updateEnemy;
 	this.onChangeLevel = onChangeLevel;
+	this.addFood = addFood,
+	this.removeFood = removeFood;
 }
 Server.prototype.initializePlayer = function () {
 	var self = this;
@@ -57,6 +59,8 @@ Server.prototype.joinGame = function (gameId) {
 	var self = this;
 	this.gameData = new Firebase(this.firebaseUrl + gameId);
 	this.levelData = new Firebase(this.firebaseUrl + gameId + "/level");
+	this.food = new Firebase(this.firebaseUrl + gameId + "/food");
+	this.foodList = [];	
 	//set the level to zero by default
 	this.setDefaultValue(this.firebaseUrl + gameId, "level", 0);
 	this.playerList = new Firebase(this.firebaseUrl + gameId + "/player_list");
@@ -99,6 +103,47 @@ Server.prototype.joinGame = function (gameId) {
 			console.log("new level: ", snapshot.val());			
 		})
 	});
+	this.listeners.push({
+		key: "child_added", 
+		obj: this.food,
+		func: this.food.on("child_added", function (snapshot) {	
+			self.addFood(snapshot.val());
+			self.foodList.push({ref:snapshot, point: snapshot.val()});
+			console.log("added food: ", snapshot);
+		})
+	});
+	this.listeners.push({
+		key: "child_removed", 
+		obj: this.food,
+		func: this.food.on("child_removed", function (snapshot) {
+			self.removeFood(snapshot.val());
+			self.findAndRemoveFood(snapshot.val().x, snapshot.val().y);
+			console.log("remove food: ", snapshot);
+		}) 
+	});
+};
+Server.prototype.createFood = function(x, y) {	
+	this.food.push({x: x, y:y});
+};
+Server.prototype.eatFood = function (x, y) {
+	var ref = this.findAndRemoveFood(x, y);
+	
+	if (ref != undefined)  {
+		this.food.child(ref.name()).remove();
+	}
+};
+Server.prototype.findAndRemoveFood = function (x, y) {
+	var bFound = false;
+	var i = 0;
+	while (!bFound && i < this.foodList.length) {
+		var item = this.foodList[i];
+		if (item.point.x == x && item.point.y == y) {
+			this.foodList.splice(i, 1);
+			return item.ref;
+		} else {
+			i++;
+		}
+	}
 };
 Server.prototype.updateLevel = function (level) {
 	 this.levelData.set(level);
