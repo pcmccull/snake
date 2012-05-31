@@ -193,7 +193,7 @@ SnakeGame.prototype.startGame = function () {
 	
 };
 SnakeGame.prototype.levelCompleted = function () {
-	if (this.levelIndex == SnakeGame.levels.length) {
+	if (this.levelIndex == SnakeGame.levels.length - 1) {
 		//TODO handlegame over
 		this.levelIndex = 0;
 	} else {
