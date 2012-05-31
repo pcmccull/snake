@@ -451,9 +451,11 @@ SnakeGame.prototype.isCollision = function (x, y) {
 	}
 	
 	//check for food collision
+	var bottomY = Math.floor(y/2)*2;
+	var topY = bottomY-1;
 	for (var i = 0; i < this.food.length; i++) {
-		if (x == this.food[i].x && y == this.food[i].y)  {
-			this.server.eatFood(x, y);
+		if (x == this.food[i].x && (bottomY == this.food[i].y || topY == this.food[i].y))  {
+			this.server.eatFood(this.food[i].x, this.food[i].y);
 			this.yourSnake.length += this.options.grow;
 			this.speed *= this.options.speedUp;			
 		}
