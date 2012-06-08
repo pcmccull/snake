@@ -46,7 +46,7 @@ SnakeGame.prototype.showSplashScreen = function () {
 	$("#splashScreen").show();
 	this.reset();
 	this.gameState = SnakeGame.STATE_SPLASH;	 
-	this.levelIndex = 0;
+	this.levelIndex = 7;
 	this.level = SnakeGame.levels[this.levelIndex];
 	
 	if (this.server) {
@@ -513,7 +513,7 @@ SnakeGame.keyMapping = {
 			"37" : SnakeGame.directionMap.left,
 			"39" : SnakeGame.directionMap.right
 		};
-SnakeGame.MAX_OBJECTIVE = 3;
+SnakeGame.MAX_OBJECTIVE = 5;
 SnakeGame.MAX_FOOD = 5;
 
 //lower speed is faster
@@ -574,7 +574,7 @@ SnakeGame.levels = [
 			         [{x:60, y: 15}, {x:60, y: 35}] , [{x:22, y: 38}, {x:58, y: 38}]]
 		},
 		 {
-			speed: .85,
+			speed: .88,
 			title: "Level 6: Jail Time",
 			walls: [ [{x:10, y: 1}, {x:10, y: 20}], [{x:20, y: 1}, {x:20, y: 20}],
 			         [{x:30, y: 1}, {x:30, y: 20}], [{x:40, y: 1}, {x:40, y: 20}],
@@ -586,7 +586,7 @@ SnakeGame.levels = [
 			         [{x:70, y: 32}, {x:70, y: 49}] ]
 		},
 		 {
-			speed: .80,
+			speed: .86,
 			title: "Level 7: Cross the Dotted Line",
 			walls: [ [{x:39, y: 3}, {x:39, y: 3}], [{x:39, y: 5}, {x:39, y: 5}],
 			         [{x:39, y: 7}, {x:39, y: 7}], [{x:39, y: 9}, {x:39, y: 9}], [{x:39, y: 11}, {x:39, y: 11}],
@@ -596,6 +596,14 @@ SnakeGame.levels = [
 					 [{x:39, y: 31}, {x:39, y: 31}],  [{x:39, y: 33}, {x:39, y: 33}],  [{x:39, y: 35}, {x:39, y: 35}],
 					 [{x:39, y: 37}, {x:39, y: 37}],  [{x:39, y: 39}, {x:39, y: 39}],  [{x:39, y: 41}, {x:39, y: 41}],
 					 [{x:39, y: 43}, {x:39, y: 43}],  [{x:39, y: 45}, {x:39, y: 45}],  [{x:39, y: 47}, {x:39, y: 47}]
+					]
+		},
+		{
+			speed: .84,
+			title: "Level 8: Through the middle",
+			walls: [  [{x:39, y: 1}, {x:39, y: 18}], [{x:39, y: 30}, {x:39, y: 48}],
+			          [{x:30, y:10}, {x:30, y:10}],[{x:31, y:11}, {x:31, y:11}],[{x:32, y:12}, {x:32, y:12}],[{x:33, y:13}, {x:33, y:13}],[{x:34, y:14}, {x:34, y:14}],[{x:35, y:15}, {x:35, y:15}],[{x:36, y:16}, {x:36, y:16}],[{x:37, y:17}, {x:37, y:17}],[{x:38, y:18}, {x:38, y:18}],[{x:39, y:19}, {x:39, y:19}],[{x:40, y:20}, {x:40, y:20}],[{x:41, y:21}, {x:41, y:21}],[{x:42, y:22}, {x:42, y:22}],[{x:43, y:23}, {x:43, y:23}],[{x:44, y:24}, {x:44, y:24}],[{x:45, y:25}, {x:45, y:25}],[{x:46, y:26}, {x:46, y:26}],[{x:47, y:27}, {x:47, y:27}],[{x:48, y:28}, {x:48, y:28}],[{x:49, y:29}, {x:49, y:29}],[{x:50, y:30}, {x:50, y:30}],[{x:50, y:30}, {x:50, y:30}],
+					  [{x:30, y:20}, {x:30, y:20}],[{x:31, y:21}, {x:31, y:21}],[{x:32, y:22}, {x:32, y:22}],[{x:33, y:23}, {x:33, y:23}],[{x:34, y:24}, {x:34, y:24}],[{x:35, y:25}, {x:35, y:25}],[{x:36, y:26}, {x:36, y:26}],[{x:37, y:27}, {x:37, y:27}],[{x:38, y:28}, {x:38, y:28}],[{x:39, y:29}, {x:39, y:29}],[{x:40, y:30}, {x:40, y:30}],[{x:41, y:31}, {x:41, y:31}],[{x:42, y:32}, {x:42, y:32}],[{x:43, y:33}, {x:43, y:33}],[{x:44, y:34}, {x:44, y:34}],[{x:45, y:35}, {x:45, y:35}],[{x:46, y:36}, {x:46, y:36}],[{x:47, y:37}, {x:47, y:37}],[{x:48, y:38}, {x:48, y:38}],[{x:49, y:39}, {x:49, y:39}],[{x:50, y:40}, {x:50, y:40}],[{x:50, y:40}, {x:50, y:40}]
 					]
 		}
 	];	
