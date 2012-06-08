@@ -1,18 +1,20 @@
 /**
  * SnakeGame object
  */
-function Server(onReady, addEnemy, removeEnemy, updateEnemy, onChangeLevel, addFood, removeFood) {
+function Server() {
 	this.firebaseUrl = "http://demo.firebase.com/snake";
 	this.snakeData = new Firebase(this.firebaseUrl + '7249669454/');
 	this.initializePlayer();	
-	this.onReady = onReady;
-	this.addEnemy = addEnemy;
-	this.removeEnemy = removeEnemy;
-	this.updateEnemy = updateEnemy;
-	this.onChangeLevel = onChangeLevel;
-	this.addFood = addFood,
-	this.removeFood = removeFood;
+	this.$this = $(this);
 }
+Server.READY = "READY";
+Server.ADD_ENEMY = "ADD_ENEMY";
+Server.REMOVE_ENEMY = "REMOVE_ENEMY";
+Server.UPDATE_ENEMY = "UPDATE_ENEMY";
+Server.CHANGE_LEVEL = "CHANGE_LEVEL";
+Server.ADD_FOOD = "ADD_FOOD";
+Server.REMOVE_FOOD = "REMOVE_FOOD";
+	
 Server.prototype.initializePlayer = function () {
 	var self = this;
 	
@@ -44,8 +46,7 @@ Server.prototype.findGame = function (gameId) {
 Server.prototype.createGame = function () {
 	var self = this;
 	var gamesList = this.snakeData.child("games_list");
-	var gameId = 'game_' + (+ new Date);
-	console.log("joining: " + gameId);
+	var gameId = 'game_' + (+ new Date);	
 	this.game = gamesList.push({id:gameId}, function (result) {
 		if (result) {
 			self.joinGame(gameId);
@@ -54,6 +55,15 @@ Server.prototype.createGame = function () {
 			console.log("Error: unable to create game");
 		}
 	});
+};
+Server.prototype.on = function (id, func) {  
+	this.$this.on(id, func);
+};
+Server.prototype.off = function (id, func) {  
+	this.$this.off(id, func);
+};
+Server.prototype.trigger = function (id, obj) {
+	this.$this.trigger(id, obj);
 };
 Server.prototype.joinGame = function (gameId) {
 	var self = this;
@@ -66,15 +76,14 @@ Server.prototype.joinGame = function (gameId) {
 	this.playerList = new Firebase(this.firebaseUrl + gameId + "/player_list");
 	this.playerData = this.playerList.push({player: this.playerName, turns: []});
 	this.playerData.removeOnDisconnect();
-	this.onReady(this.playerName);
+	this.$this.trigger(Server.READY, this.playerName);
 	this.playerCount = 0;
 	this.listeners = [];
 	this.listeners.push({
 		key: "child_added", 
 		obj: this.playerList,
 		func: this.playerList.on("child_added", function (snapshot) {	
-			self.addEnemy(snapshot.val());
-			console.log("added: ", snapshot.val());
+			self.trigger(Server.ADD_ENEMY, snapshot.val());
 			self.playerCount++;		
 			self.updatePlayerCount();
 		})
@@ -83,7 +92,7 @@ Server.prototype.joinGame = function (gameId) {
 		key: "value",
 		obj: this.playerList,
 		func: this.playerList.on("value", function (snapshot) {
-			self.updateEnemy(snapshot.val());
+			self.trigger(Server.UPDATE_ENEMY, snapshot.val());
 		})
 	});
 	this.listeners.push({
@@ -92,33 +101,31 @@ Server.prototype.joinGame = function (gameId) {
 		func: this.playerList.on("child_removed", function (snapshot) {
 			self.playerCount--;
 			self.updatePlayerCount();	
-			self.removeEnemy(snapshot.val());
+			self.trigger(Server.REMOVE_ENEMY, snapshot.val());
 		}) 
 	});
 	this.listeners.push({
 		key: "value", 
 		obj: this.levelData ,
-		func: this.levelData .on("value", function (snapshot) {	
-			self.onChangeLevel(snapshot.val());
-			console.log("new level: ", snapshot.val());			
+		func: this.levelData .on("value", function (snapshot) {			
+			self.trigger(Server.CHANGE_LEVEL, snapshot.val());	
 		})
 	});
 	this.listeners.push({
 		key: "child_added", 
 		obj: this.food,
 		func: this.food.on("child_added", function (snapshot) {	
-			self.addFood(snapshot.val());
+			self.trigger(Server.ADD_FOOD, snapshot.val());
 			self.foodList.push({ref:snapshot, point: snapshot.val()});
-			console.log("added food: ", snapshot);
+			
 		})
 	});
 	this.listeners.push({
 		key: "child_removed", 
 		obj: this.food,
 		func: this.food.on("child_removed", function (snapshot) {
-			self.removeFood(snapshot.val());
-			self.findAndRemoveFood(snapshot.val().x, snapshot.val().y);
-			console.log("remove food: ", snapshot);
+			self.trigger(Server.REMOVE_FOOD, snapshot.val());
+			self.findAndRemoveFood(snapshot.val().x, snapshot.val().y);			
 		}) 
 	});
 };

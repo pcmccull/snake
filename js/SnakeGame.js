@@ -65,23 +65,31 @@ SnakeGame.prototype.showJoiningScreen = function () {
 	$("div.screen").hide();
 	$("#joiningGame").show();
 	var self = this;
-	this.server = new Server(function(name) {
-		self.options = SnakeGame.difficulty.medium;
-		self.name = name;
-	}, function (enemySnake) {
+	this.server = new Server();
+	
+	this.server.on(Server.READY, function(evt, name) {
+			self.options = SnakeGame.difficulty.medium;
+			self.name = name;
+		});
+	this.server.on(Server.ADD_ENEMY, function (evt, enemySnake) {
 		self.addEnemySnake(enemySnake);
-	}, function (enemySnake) {
+	});
+	this.server.on(Server.REMOVE_ENEMY, function (evt, enemySnake) {
 		self.removeEnemySnake(enemySnake);
-	}, function (enemySnake) {
+	});
+	this.server.on(Server.UPDATE_ENEMY, function (evt, enemySnake) {
 		self.updateEnemySnake(enemySnake);
-	}, function (newLevel) {		
+	});
+	this.server.on(Server.CHANGE_LEVEL, function (evt, newLevel) {		
 		$("div.screen").hide();
 		self.levelIndex = newLevel;
 		self.level = SnakeGame.levels[self.levelIndex];
 		self.showLevelTitleScreen();
-	}, function (food) {
+	});
+	this.server.on(Server.ADD_FOOD, function (evt, food) {
 		self.addFood(food);
-	}, function (food) {
+	});
+	this.server.on(Server.REMOVE_FOOD, function (evt, food) {
 		self.removeFood(food);
 	});
 };
@@ -144,7 +152,6 @@ SnakeGame.prototype.removeFood = function (food) {
 	this.nextFoodUpdate = Math.random() * 5000 + 20;
 };
 
-
 SnakeGame.prototype.showLevelTitleScreen = function () {
 	this.gameState = SnakeGame.STATE_PAUSED;
 	$("div.screen").hide();
@@ -152,6 +159,7 @@ SnakeGame.prototype.showLevelTitleScreen = function () {
 	$("#levelTitle").html(this.level.title);	
 	this.walls = [];
 	this.canvas.clearWalls();
+	this.canvas.clearSnakes();
 	this.drawWalls();
 };
 
