@@ -30,15 +30,24 @@ SnakeGame.prototype.reset = function () {
 };
 SnakeGame.prototype.initializeControls = function () {
 	var self = this;
-	if ("ontouchstart" in window) {
+	if (this.isMobile()) {
 		$("body").swipe({swipe: function (e, direction, distance) {
 			this.yourSnake.setNewDir(SnakeGame.directionMap[direction]);
 			}
 		});
+		$("body").addClass("mobile");
 	} else {
 		$(document).on("keydown", function (e) { self.keyDown(e); });
+		$("body").addClass("desktop");
 	}
 	$(document).focus();
+};
+
+SnakeGame.prototype.isMobile = function () {
+	if (this.MOBILE == undefined) {
+		this.MOBILE = ("ontouchstart" in window);
+	}
+	return this.MOBILE;
 };
 
 SnakeGame.prototype.showSplashScreen = function () {	

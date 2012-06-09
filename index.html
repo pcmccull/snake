@@ -69,6 +69,12 @@ pre {
 	color: #FFFF00;
 	display: none;
 }
+body.desktop div.mobile {
+	display:none;
+}
+body.mobile div.desktop {
+	display:none;
+}
 </style>
 </head>
 <body>
@@ -78,7 +84,7 @@ pre {
 		<div id="otherSnakes" class="drawing"></div>
 		<div id="walls" class="drawing"></div>
 		<div class="playerCount"></div>
-		<div id="splashScreen" class="screen">
+		<div id="splashScreen" class="screen desktop">
 			<pre>▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄</pre><br />
 			<pre>█                                                            █</pre><br />
 			<pre>█                   Yet Another Snake Game                   █</pre><br />
@@ -88,7 +94,7 @@ pre {
 			<pre>█                                                            █</pre><br />
 			<pre>▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀</pre>
 		</div>
-		<div id="difficultyScreen" class="screen">
+		<div id="difficultyScreen" class="screen desktop">
 			<pre>▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄</pre><br />
 			<pre>█                                                            █</pre><br />
 			<pre>█                Select difficulty:                          █</pre><br />
@@ -100,7 +106,7 @@ pre {
 			<pre>█                                                            █</pre><br />
 			<pre>▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀</pre>
 		</div>
-		<div id="levelScreen" class="screen">
+		<div id="levelScreen" class="screen desktop">
 					<pre>▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄</pre><br />
 					<pre>█                                                    █</pre><br />
 					<pre id="levelTitle"></pre><br />
@@ -109,7 +115,7 @@ pre {
 					<pre>█                                                    █</pre><br />
 					<pre>▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀</pre>
 		</div>
-		<div id="snakeDied" class="screen">
+		<div id="snakeDied" class="screen desktop">
 			<pre>▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄</pre><br />
 			<pre>█                                   █</pre><br />
 			<pre>█            You Died :(            █</pre><br />
@@ -118,14 +124,14 @@ pre {
 			<pre>█                                   █</pre><br />
 			<pre>▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀</pre>
 		</div>
-		<div id="joiningGame" class="screen">
+		<div id="joiningGame" class="screen desktop">
 			<pre>▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄</pre><br />
 			<pre>█                                   █</pre><br />
 			<pre>█          Joining game...          █</pre><br />
 			<pre>█                                   █</pre><br />
 			<pre>▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀</pre>
 		</div>
-		<div id="gameOver" class="screen">
+		<div id="gameOver" class="screen desktop">
 			<pre>▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄</pre><br />
 			<pre>█                                   █</pre><br />
 			<pre>█            You Win! :)            █</pre><br />						
