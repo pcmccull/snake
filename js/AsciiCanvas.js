@@ -21,6 +21,11 @@ AsciiCanvas.OTHER_SNAKES = "otherSnakes";
 AsciiCanvas.WALLS = "walls";
 AsciiCanvas.OVERLAY = "overlay";
 
+AsciiCanvas.BLOCK = "\u2588";
+AsciiCanvas.LOWER_BLOCK = "\u2584";
+AsciiCanvas.UPPER_BLOCK_ALTERNATE = "\u2500";
+AsciiCanvas.UPPER_BLOCK = "\u2580";
+AsciiCanvas.FOOD = "\u263C";
 
 AsciiCanvas.prototype.init = function () {
 	this.initDrawing(AsciiCanvas.SNAKE);
@@ -206,7 +211,7 @@ AsciiCanvas.prototype.drawLine = function (x0, y0, x1, y1, drawing) {
 };
 
 AsciiCanvas.prototype.drawPixel = function(x, y, drawing) {
-	var output = y % 2 == 0 ? "\u2580" : "\u2584";
+	var output = y % 2 == 0 ? AsciiCanvas.UPPER_BLOCK : AsciiCanvas.LOWER_BLOCK;
 	var text = this[drawing + "Drawing"][Math.floor(y / 2)].pre.text();
 
 	var newText = "";
@@ -215,7 +220,7 @@ AsciiCanvas.prototype.drawPixel = function(x, y, drawing) {
 		newText = text.substring(0, x) + output
 				+ text.substring(x + 1);
 	} else if (current != output) {
-		newText = text.substring(0, x) + "\u2588"
+		newText = text.substring(0, x) + AsciiCanvas.BLOCK
 				+ text.substring(x + 1);
 	} else {
 		newText = text; 
@@ -224,8 +229,8 @@ AsciiCanvas.prototype.drawPixel = function(x, y, drawing) {
 };
 
 AsciiCanvas.prototype.clearPixel = function(x, y, drawing) {	
-	var output = y % 2 == 0 ? "\u2580" : "\u2584";
-	var oppositeOutput = y % 2 != 0 ? "\u2580" : "\u2584";
+	var output = y % 2 == 0 ? AsciiCanvas.UPPER_BLOCK : AsciiCanvas.LOWER_BLOCK;
+	var oppositeOutput = y % 2 != 0 ? AsciiCanvas.UPPER_BLOCK : AsciiCanvas.LOWER_BLOCK;
 	var text = this[drawing + "Drawing"][Math.floor(y / 2)].pre.text();
 
 	var newText;

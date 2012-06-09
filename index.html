@@ -11,7 +11,7 @@
 	src="js/jquery.touchSwipe-1.2.6.js"></script>
 <!-- <script type="text/javascript" src="js/SnakeGame.js"></script>-->
 <style type="text/css">
-html,body,#game, #game > div {
+html,body,#game, #game > div, #game div.desktop > div {
 	width: 100%;
 	height: 100%;
 	margin: 0;
@@ -84,61 +84,63 @@ body.mobile div.desktop {
 		<div id="otherSnakes" class="drawing"></div>
 		<div id="walls" class="drawing"></div>
 		<div class="playerCount"></div>
-		<div id="splashScreen" class="screen desktop">
-			<pre>▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄</pre><br />
-			<pre>█                                                            █</pre><br />
-			<pre>█                   Yet Another Snake Game                   █</pre><br />
-			<pre>█                                                            █</pre><br />
-			<pre>█                 Press 1 for single player                  █</pre><br />
-			<pre>█                 Press 2 for multiplayer                    █</pre><br />
-			<pre>█                                                            █</pre><br />
-			<pre>▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀</pre>
-		</div>
-		<div id="difficultyScreen" class="screen desktop">
-			<pre>▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄</pre><br />
-			<pre>█                                                            █</pre><br />
-			<pre>█                Select difficulty:                          █</pre><br />
-			<pre>█                                                            █</pre><br />
-			<pre>█                 Press 1 for easy                           █</pre><br />
-			<pre>█                 Press 2 for medium                         █</pre><br />
-			<pre>█                 Press 3 for hard                           █</pre><br />
-			<pre>█                 Press 4 for impossible                     █</pre><br />
-			<pre>█                                                            █</pre><br />
-			<pre>▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀</pre>
-		</div>
-		<div id="levelScreen" class="screen desktop">
-					<pre>▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄</pre><br />
-					<pre>█                                                    █</pre><br />
-					<pre id="levelTitle"></pre><br />
-					<pre>█                                                    █</pre><br />
-					<pre>█              Press Space Bar to Begin              █</pre><br />
-					<pre>█                                                    █</pre><br />
-					<pre>▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀</pre>
-		</div>
-		<div id="snakeDied" class="screen desktop">
-			<pre>▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄</pre><br />
-			<pre>█                                   █</pre><br />
-			<pre>█            You Died :(            █</pre><br />
-			<pre>█                                   █</pre><br />
-			<pre>█   Press Space Bar to Try Again    █</pre><br />
-			<pre>█                                   █</pre><br />
-			<pre>▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀</pre>
-		</div>
-		<div id="joiningGame" class="screen desktop">
-			<pre>▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄</pre><br />
-			<pre>█                                   █</pre><br />
-			<pre>█          Joining game...          █</pre><br />
-			<pre>█                                   █</pre><br />
-			<pre>▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀</pre>
-		</div>
-		<div id="gameOver" class="screen desktop">
-			<pre>▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄</pre><br />
-			<pre>█                                   █</pre><br />
-			<pre>█            You Win! :)            █</pre><br />						
-			<pre>█                                   █</pre><br />
-			<pre>█   Press Space Bar to Play Again   █</pre><br />
-			<pre>█                                   █</pre><br />
-			<pre>▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀</pre>
+		<div class="desktop">
+			<div id="splashScreen" class="screen">
+				<pre>▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄</pre><br />
+				<pre>█                                                            █</pre><br />
+				<pre>█                   Yet Another Snake Game                   █</pre><br />
+				<pre>█                                                            █</pre><br />
+				<pre>█                 Press 1 for single player                  █</pre><br />
+				<pre>█                 Press 2 for multiplayer                    █</pre><br />
+				<pre>█                                                            █</pre><br />
+				<pre>▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀</pre>
+			</div>
+			<div id="difficultyScreen" class="screen">
+				<pre>▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄</pre><br />
+				<pre>█                                                            █</pre><br />
+				<pre>█                Select difficulty:                          █</pre><br />
+				<pre>█                                                            █</pre><br />
+				<pre>█                 Press 1 for easy                           █</pre><br />
+				<pre>█                 Press 2 for medium                         █</pre><br />
+				<pre>█                 Press 3 for hard                           █</pre><br />
+				<pre>█                 Press 4 for impossible                     █</pre><br />
+				<pre>█                                                            █</pre><br />
+				<pre>▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀</pre>
+			</div>
+			<div id="levelScreen" class="screen">
+						<pre>▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄</pre><br />
+						<pre>█                                                    █</pre><br />
+						<pre id="levelTitle"></pre><br />
+						<pre>█                                                    █</pre><br />
+						<pre>█              Press Space Bar to Begin              █</pre><br />
+						<pre>█                                                    █</pre><br />
+						<pre>▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀</pre>
+			</div>
+			<div id="snakeDied" class="screen">
+				<pre>▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄</pre><br />
+				<pre>█                                   █</pre><br />
+				<pre>█            You Died :(            █</pre><br />
+				<pre>█                                   █</pre><br />
+				<pre>█   Press Space Bar to Try Again    █</pre><br />
+				<pre>█                                   █</pre><br />
+				<pre>▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀</pre>
+			</div>
+			<div id="joiningGame" class="screen">
+				<pre>▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄</pre><br />
+				<pre>█                                   █</pre><br />
+				<pre>█          Joining game...          █</pre><br />
+				<pre>█                                   █</pre><br />
+				<pre>▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀</pre>
+			</div>
+			<div id="gameOver" class="screen">
+				<pre>▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄</pre><br />
+				<pre>█                                   █</pre><br />
+				<pre>█            You Win! :)            █</pre><br />						
+				<pre>█                                   █</pre><br />
+				<pre>█   Press Space Bar to Play Again   █</pre><br />
+				<pre>█                                   █</pre><br />
+				<pre>▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀</pre>
+			</div>
 		</div>
 	</div>
 	

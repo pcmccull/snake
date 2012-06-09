@@ -141,7 +141,7 @@ SnakeGame.prototype.removeEnemySnake = function (snake) {
 };
 SnakeGame.prototype.addFood = function (food) {
 	this.food.push(food);
-	this.canvas.drawCharacter(food.x, food.y, "\u263C", AsciiCanvas.SNAKE);
+	this.canvas.drawCharacter(food.x, food.y, AsciiCanvas.FOOD, AsciiCanvas.SNAKE);
 	this.lastFoodUpdate = + new Date;
 	this.nextFoodUpdate = Math.random() * 5000 + 20;
 };
@@ -385,7 +385,7 @@ SnakeGame.prototype.drawAllObjectives = function () {
 	}
 	
 	for (var i = 0; i < this.food.length; i++) {
-		this.canvas.drawCharacter( this.food[i].x, this.food[i].y, "\u263C", AsciiCanvas.SNAKE);
+		this.canvas.drawCharacter( this.food[i].x, this.food[i].y, AsciiCanvas.FOOD, AsciiCanvas.SNAKE);
 	}
 };
 SnakeGame.prototype.drawSnake = function (snake, drawing) {
