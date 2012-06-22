@@ -55,7 +55,7 @@ SnakeGame.prototype.showSplashScreen = function () {
 	$("#splashScreen").show();
 	this.reset();
 	this.gameState = SnakeGame.STATE_SPLASH;	 
-	this.levelIndex = 7;
+	this.levelIndex = 0;
 	this.level = SnakeGame.levels[this.levelIndex];
 	
 	if (this.server) {
@@ -292,13 +292,13 @@ SnakeGame.prototype.update = function () {
 	
 	while (dt > this.speed) {		
 		if (this.gameState == SnakeGame.STATE_PLAYING) {
-			this.updateSnake(this.yourSnake);
+			 this.updateSnake(this.yourSnake);
 		}
 		dt -= this.speed;
 		updates++;
 	}
 	
-	if (this.server && this.gameState == SnakeGame.STATE_PLAYING) {
+	if (this.server && this.gameState == SnakeGame.STATE_PLAYING && updates > 0) {
 		this.server.updateMySnake(this.yourSnake);
 	}
 	
